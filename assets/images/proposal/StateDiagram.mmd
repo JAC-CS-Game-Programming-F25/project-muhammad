@@ -1,0 +1,38 @@
+---
+config:
+  theme: default
+  look: neo
+---
+stateDiagram-v2
+    [*] --> TitleScreen
+    
+    state "Game States" as game {
+        TitleScreen --> Playing : Click Play
+        Playing --> RoundEnd : Round Complete
+        RoundEnd --> Playing : Next Round (Lives > 0, Rounds < 5)
+        RoundEnd --> GameOver : Lives = 0 OR Rounds = 5
+        GameOver --> TitleScreen : Restart
+    }
+    
+    state Playing {
+        [*] --> PlayerIdle
+        
+        state "Player States" as player {
+            PlayerIdle --> PlayerWalking : WASD Pressed
+            PlayerWalking --> PlayerIdle : Keys Released
+            PlayerIdle --> PlayerPlanting : Enter Pressed
+            PlayerWalking --> PlayerPlanting : Enter Pressed
+            PlayerPlanting --> PlayerIdle : 2 seconds complete
+            PlayerPlanting --> PlayerDead : Wrong/Timeout/Interrupted
+            PlayerIdle --> PlayerDead : Timer Expires
+            PlayerWalking --> PlayerDead : Timer Expires
+        }
+        
+        state "Ghost States" as ghost {
+            GhostHidden --> GhostMaterializing : Failure Condition
+            GhostMaterializing --> GhostAttacking : Appear (Instant)
+            GhostAttacking --> GhostHidden : Kill Complete
+        }
+    }
+    
+    GameOver --> [*]
