@@ -1,0 +1,314 @@
+@startuml JAC Ghost Hunt
+
+skinparam monochrome true
+hide empty members
+
+class PlayState {
+    player
+    ghost
+    map
+    roundManager
+    gameTimer
+    userInterface
+    roomImageViewer
+    entities
+    objects
+    enter()
+    exit()
+    update()
+    render()
+}
+
+class GameEntity {
+    position
+    hitbox
+    sprite
+    animation
+    update()
+    render()
+}
+
+class Player {
+    stateMachine
+    map
+    speed
+    runSpeed
+    stamina
+    maxStamina
+    plantingProgress
+    update()
+    render()
+    plantFlag()
+}
+
+class Ghost {
+    stateMachine
+    isVisible
+    update()
+    render()
+    materialize()
+    attack()
+}
+
+class GhostStateMachine {
+    states
+    currentState
+    change()
+    update()
+}
+
+class GhostHiddenState {
+    update()
+}
+
+class GhostMaterializingState {
+    animation
+    materialize()
+}
+
+class GhostAttackingState {
+    animation
+    attack()
+}
+
+class GameObject {
+    position
+    sprite
+    update()
+    render()
+}
+
+class Flag {
+    roomId
+    isPlanted
+    update()
+    render()
+}
+
+class Map {
+    bottomLayer
+    collisionLayer
+    topLayer
+    checkCollisionAtPixel()
+    getRoomIdAt()
+    render()
+}
+
+class Layer {
+    tiles
+    width
+    height
+    getTile()
+    render()
+}
+
+class Tile {
+    id
+    sprites
+    static SIZE
+    render()
+}
+
+class Room {
+    id
+    building
+    floor
+    name
+    image360
+    description
+}
+
+class Building {
+    name
+    floors
+}
+
+class Floor {
+    number
+    rooms
+    stairs
+}
+
+class RoundManager {
+    currentRound
+    lives
+    targetRoomId
+    scoreManager
+    startRound()
+    endRound()
+    checkRoundComplete()
+    nextRound()
+}
+
+class GameTimer {
+    timeRemaining
+    baseTime
+    start()
+    update()
+    isExpired()
+    getTimeRemaining()
+}
+
+class ScoreManager {
+    currentScore
+    highScores
+    loadScores()
+    saveScore()
+    updateHighScore()
+    getHighScore()
+}
+
+class UserInterface {
+    staminaBar
+    timerDisplay
+    scoreDisplay
+    livesDisplay
+    update()
+    render()
+}
+
+class RoomImageViewer {
+    image360
+    rotationAngle
+    rotate()
+    render()
+}
+
+class FloorTransition {
+    currentFloor
+    targetFloor
+    isTransitioning
+    startTransition()
+    update()
+    render()
+}
+
+class Factory {
+    rooms
+    loadRooms()
+    createPlayer()
+    createGhost()
+    createFlag()
+    getRoom()
+    getRandomRoom()
+}
+
+class RoomManager {
+    rooms
+    loadFromJSON()
+    getRoomById()
+    getAllRooms()
+}
+
+enum GameStateName {
+    TitleScreen
+    Play
+    GameOver
+    Victory
+}
+
+enum PlayerStateName {
+    Idle
+    Walking
+    Running
+    Planting
+    Dead
+}
+
+enum GhostStateName {
+    Hidden
+    Materializing
+    Attacking
+}
+
+class PlayerStateMachine {
+    states
+    currentState
+    change()
+    update()
+}
+
+class PlayerWalkingState {
+    animation
+    handleMovement()
+    checkCollision()
+}
+
+class PlayerIdlingState {
+    animation
+    checkForMovement()
+}
+
+class PlayerRunningState {
+    animation
+    handleMovement()
+    checkStamina()
+}
+
+class PlayerPlantingState {
+    animation
+    plantingTimer
+    handlePlanting()
+    checkCompletion()
+}
+
+PlayState "1" -- "*" GameEntity
+PlayState "1" -- "*" GameObject
+PlayState "1" -- "1" Map
+PlayState "1" -- "1" RoundManager
+PlayState "1" -- "1" GameTimer
+PlayState "1" -- "1" UserInterface
+PlayState "1" -- "1" RoomImageViewer
+
+GameEntity <|-- Player
+GameEntity <|-- Ghost
+GameObject <|-- Flag
+
+Player "1" -- "1" PlayerStateMachine
+Ghost "1" -- "1" GhostStateMachine
+
+Player -- Flag : plants
+
+Building "1" -- "*" Floor
+Floor "1" -- "*" Room
+
+RoundManager "1" -- "1" ScoreManager
+RoundManager "1" -- "1" Room : targetRoom
+
+Factory "1" -- "1" RoomManager
+Factory -- GameEntity : creates
+Factory -- GameObject : creates
+RoomManager "1" -- "*" Room
+
+Player ..> PlayerStateName : uses
+Ghost ..> GhostStateName : uses
+
+Map "1" -- "1" Layer : bottomLayer
+Map "1" -- "1" Layer : collisionLayer
+Map "1" -- "1" Layer : topLayer
+Layer "1" -- "*" Tile
+
+PlayerStateMachine "1" -- "*" PlayerWalkingState : manages
+PlayerStateMachine "1" -- "*" PlayerIdlingState : manages
+PlayerStateMachine "1" -- "*" PlayerRunningState : manages
+PlayerStateMachine "1" -- "*" PlayerPlantingState : manages
+
+PlayerWalkingState ..> Map : uses (tile collision for walls)
+PlayerRunningState ..> Map : uses (tile collision for walls)
+
+GhostStateMachine "1" -- "*" GhostHiddenState : manages
+GhostStateMachine "1" -- "*" GhostMaterializingState : manages
+GhostStateMachine "1" -- "*" GhostAttackingState : manages
+
+UserInterface ..> Player : displays (stamina)
+UserInterface ..> GameTimer : displays (timer)
+UserInterface ..> RoundManager : displays (lives, score)
+RoomImageViewer ..> Room : displays (image360)
+
+Map "1" -- "0..1" FloorTransition
+FloorTransition ..> Floor : transitions between
+
+Map ..> Room : references
+
+@enduml
+

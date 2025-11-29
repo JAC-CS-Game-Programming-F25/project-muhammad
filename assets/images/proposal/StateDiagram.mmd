@@ -20,12 +20,23 @@ stateDiagram-v2
         state "Player States" as player {
             PlayerIdle --> PlayerWalking : WASD Pressed
             PlayerWalking --> PlayerIdle : Keys Released
+            PlayerIdle --> PlayerRunning : Shift + WASD (Stamina > 0)
+            PlayerWalking --> PlayerRunning : Shift Pressed (Stamina > 0)
+            PlayerRunning --> PlayerWalking : Shift Released
+            PlayerRunning --> PlayerWalking : Stamina Depleted
+            PlayerRunning --> PlayerIdle : Keys Released
             PlayerIdle --> PlayerPlanting : Enter Pressed
             PlayerWalking --> PlayerPlanting : Enter Pressed
+            PlayerRunning --> PlayerPlanting : Enter Pressed
             PlayerPlanting --> PlayerIdle : 2 seconds complete
             PlayerPlanting --> PlayerDead : Wrong/Timeout/Interrupted
             PlayerIdle --> PlayerDead : Timer Expires
             PlayerWalking --> PlayerDead : Timer Expires
+            PlayerRunning --> PlayerDead : Timer Expires
+            
+            note right of PlayerIdle : Stamina regenerates
+            note right of PlayerWalking : Stamina regenerates
+            note right of PlayerRunning : Stamina drains
         }
         
         state "Ghost States" as ghost {
