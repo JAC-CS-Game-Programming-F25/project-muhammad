@@ -1,117 +1,204 @@
-# Final Project
+# JAC Ghost Hunt
 
--   [ ] Read the [project requirements](https://vikramsinghmtl.github.io/420-5P6-Game-Programming/project/requirements).
--   [ ] Replace the sample proposal below with the one for your game idea.
--   [ ] Get the proposal greenlit by Vik.
--   [ ] Place any assets in `assets/` and remember to update `src/config.json`.
--   [ ] Decide on a height and width inside `src/globals.js`. The height and width will most likely be determined based on the size of the assets you find.
--   [ ] Start building the individual components of your game, constantly referring to the proposal you wrote to keep yourself on track.
--   [ ] Good luck, you got this!
+## Description
 
----
+JAC Ghost Hunt is a horror-themed location guessing game set in John Abbott College. Players view a 360° photograph of a random room on campus and must navigate a 2D top-down map of the building to locate and mark the correct room before being caught by a pursuing ghost. The game combines spatial awareness, campus knowledge, and time pressure into an educational yet thrilling survival experience.
 
-# Sample Proposal - Pokémon the Trading Card Game
+The game architecture uses a state machine pattern for both player and ghost entities, allowing for smooth transitions between different behaviors. The player can be in one of five states: Idle, Walking, Running, Planting, or Dead. The ghost operates through three states: Hidden, Materializing, and Attacking. The game implements a hybrid collision system that uses tile-based collision for wall detection (similar to Pokemon-style games) and hitbox-based collision for entity interactions (similar to Zelda-style games).
 
-> [!note]
-> This was taken from a project I did in university so the scope is **much** larger than what I'm expecting from you in terms of number of features!
+The map system is built with a three-layer architecture: a bottom layer for floor graphics, a collision layer for wall detection, and a top layer for decorative elements. Rooms are organized hierarchically within buildings and floors, with each room containing metadata such as building name, floor number, room name, 360° image, and description. The game uses a Factory pattern to create entities and objects, and a RoomManager to load room data from JSON configuration files.
 
-## ✒️ Description
+Players progress through up to five rounds, with each round ending in either a RoundEnd state (for successful completion) or GameOver state (for failure). The game tracks high scores using a ScoreManager that persists data to LocalStorage.
 
-In this turn-based battle card game, players assume the role of a Pokémon trainer and use their Pokémon to battle their opponent's Pokémon. Players play Pokémon to the field and attack their opponent's Pokémon. A Pokémon that has sustained enough damage is Knocked Out, and the player who knocked it out draws a Prize card. There are usually six Prize cards, and the primary win condition is to draw all of them. Other ways to win are by knocking out all the Pokémon the opponent has on the field so that the opponent has none left, or if at the beginning of their opponent's turn there are no cards left to draw in the opponent's deck.
+## Gameplay
 
-## 🕹️ Gameplay
+Players begin the game by selecting **Quick Play** from the title screen. The system randomly selects a building and room and displays a **360° image** of that room on the left side of the screen. On the right side, the player sees a **top-down canvas map** of the entire building, including multiple floors.
 
-Players begin by having one player select heads or tails, and the other flips a coin; the winner of the coin flip will decide who goes first or second. The player going first cannot attack their first turn, unless the card says otherwise. (Dice may be used in place of coins, with even numbers representing heads and odd numbers representing tails). Players then shuffle their decks and draw seven cards, then play one Basic Pokémon onto the field. This Pokémon is known as the Active Pokémon and is usually the one that attacks and receives damage. If a player does not have any Basic Pokémon, they must shuffle and draw a new hand, and the opponent may draw one additional card. Once both players have at least one Basic Pokémon, they can play up to five more Basic Pokémon onto their "Bench" (representing the maximum-carry limit of six from the video games). Players then take the top six cards of their deck and place them to the side as Prize Cards. Play then begins with the player who won the coin flip.
+The player spawns on **Floor 1**. A timer immediately begins, starting at **60 seconds** for Round 1 and decreasing slightly each round to increase difficulty. Using WASD, the player navigates hallways, rooms, and stairs to travel between floors. The player can hold **Shift** to run faster, which consumes stamina. The stamina bar depletes while running and regenerates when the player is idle or walking normally. The player cannot run when stamina is depleted. The player rotates the 360° room photo to identify visual clues such as windows, wall colors, or classroom objects.
 
-Play alternates between players who may take several actions during their turn, including playing new Basic Pokémon, evolving their Pokémon, playing Trainer cards and Energy cards, and using Pokémon Abilities. A player may also retreat their Active Pokémon, switching the Active Pokémon with one on the Bench. At the end of their turn, a player may use one of their Active Pokémon's attacks, provided the prerequisite amount and types of Energy are attached to that Pokémon. Effects from that attack are then activated and damage may be placed on the Defending Pokémon; some attacks simply have effects but do not do damage. Damage may be modified depending on whether the defender has a weakness or a resistance to the attacker's Pokémon type. If the final damage exceeds the defending Pokémon's HP, it is Knocked Out, and the active player takes a prize card and ends their turn.
+When the player moves between floors using stairs, the floor transition is quick and smooth. When going up stairs, the next floor appears layered on top of the current floor. When going down stairs, the lower floor transitions up to become visible. The player's position is maintained relative to the stairs during these transitions.
 
-This implementation of _Pokémon the Trading Card Game_ is a single player experience with an AI. The game is played primarily with the mouse to interact with the cards and general GUI. The players can optionally hit `M` on their keyboard to mute all game sounds.
+When the player believes they are standing in the correct room on the map, they press **Enter** to plant a flag. Planting a flag requires **two full seconds**, during which the player is vulnerable. If the flag is placed in the correct room, the round ends successfully and the player earns **100 points** before moving to the next round.
 
-## 📃 Requirements
+If the flag is planted in the wrong room, the timer hits zero during planting, or the player fails to plant before time runs out, a ghost materializes instantly and kills the player. The death animation plays, and the player loses one life before automatically starting the next round.
 
-> [!note]
-> This was a web project so that's why you'll see requirements about logging in and uploading data which for you is irrelevant. Focus more on the requirements describing actions taken for gameplay.
+After all **five rounds** are completed or all three lives are lost the game ends and displays the final score and high scores stored locally on the device.
 
-1. The user shall register to be able to login.
-2. The user shall login to be able to play a game.
-3. The user shall upload a valid deck file.
-4. The user shall upload a valid cards file.
-5. The user shall upload a valid abilities file.
-6. The user shall select which deck they will use in the game.
-7. The user shall select which deck the AI will use in the game.
-8. The system shall "flip a coin" to decide which player goes first.
-9. The system shall shuffle the user's deck.
-10. The system shall draw the top 7 cards from the user's deck.
-11. If the user does not have a Basic Pokémon in their hand the system shall "mulligan" until they do.
-12. Upon each mulligan, the AI shall draw a card.
-13. The user shall put one of their Basic Pokémon face down as their Active Pokémon.
-14. The user shall put up to 5 more Basic Pokémon face down on their Bench.
-15. Upon a new turn, the system shall draw a card from the deck of the current player.
-16. Upon a new turn, the system shall place the drawn card in the hand of the current player.
-17. The user shall put (up to 5 total) Basic Pokémon cards from their hand onto their Bench.
-18. The user shall Evolve their Pokémon as many times as they choose.
-19. The user shall attach an Energy card from their hand to one of their Pokémon once per turn.
-20. The user shall play Trainer cards (as many as they want, but only one Supporter card and one Stadium card per turn).
-21. The user shall Retreat their Active Pokémon once per turn.
-22. The user shall use as many Abilities as they choose.
-23. The user shall attack the opponent's Active Pokémon.
-24. After a player attacks, the system shall end their turn and start their opponent's turn.
-25. The system shall execute any "special conditions" after a turn is over.
-26. The user shall pick a Victory Card when the opposing Active Pokémon dies.
+## Requirements
 
-### 🤖 State Diagram
+### Game Initialization
 
-> [!note]
-> Remember that you'll need diagrams for not only game states but entity states as well.
+1. The system shall display a title screen on startup.
+2. The system shall allow the user to begin the game by selecting “Play.”
+3. The system shall randomly select a building and room for the first round.
+4. The system shall load a 360° image of the selected room.
+5. The system shall load the multi-floor map of the selected building.
+6. The system shall spawn the player at a defined starting location on Floor 1.
 
-![State Diagram](./assets/images/StateDiagram.png)
+### Gameplay Loop
 
-### 🗺️ Class Diagram
+7. The system shall start a countdown timer of 60 seconds for Round 1.
+8. The system shall decrease the timer amount for each subsequent round.
+9. The user shall move their character using WASD. The user may hold Shift to run faster, consuming stamina.
+10. The system shall prevent the player from passing through walls or locked areas.
+11. The user shall change floors by moving onto stairs.
+12. The system shall display quick floor transitions when the player moves between floors. When going up, the next floor appears above the current floor. When going down, the lower floor transitions up to become visible.
+13. The user shall rotate the 360° photograph with the mouse.
+14. The user shall press Enter to plant a flag.
+15. The system shall require a 2-second planting duration to complete the flag action.
+16. The system shall check whether the flag was planted in the correct room.
+17. The system shall end the round immediately if the planted flag is correct.
+18. The system shall award 100 points for a correct answer.
+19. The system shall end the round and deduct one life if the flag is incorrect.
+20. The system shall end the round and deduct one life if the timer reaches zero.
+21. The system shall end the round and deduct one life if the user is killed while planting.
+22. The system shall display the score, timer, and lives visually at all times.
+23. The system shall display a stamina bar that depletes while the player is running and regenerates when the player is idle or walking.
+24. The system shall prevent the player from running when stamina is depleted.
+25. The system shall maintain the player's position relative to stairs during floor transitions.
 
-![Class Diagram](./assets/images/ClassDiagram.png)
+### Ghost Logic
 
-### 🧵 Wireframes
+26. The ghost shall remain invisible during normal gameplay.
+27. The ghost shall appear only when the user fails the round (wrong room or timeout).
+28. The ghost shall kill the player instantly when it appears.
+29. The system shall play a death animation upon ghost kill.
 
-> [!note]
-> Your wireframes don't have to be super polished. They can even be black/white and hand drawn. I'm just looking for a rough idea about what you're visualizing.
+### Round Management
 
-![Main Menu](./assets/images/Main-Menu.png)
+30. The system shall track the number of completed rounds.
+31. The system shall advance automatically to the next round after each round ends.
+32. The system shall select a new random room for each round.
+33. The system shall end the game after five total rounds.
 
--   _Let's Play_ will navigate to the main game.
--   _Upload Cards_ will navigation to the forms for uploading and parsing the data files for the game.
--   _Change Log_ will navigate the user to a page with a list of features/changes that have been implemented throughout the development of the game.
+### Win/Loss Conditions
 
-![Game Board](./assets/images/Game-Board.png)
+34. The user shall lose one life upon being killed by the ghost.
+35. The user shall start the game with three lives.
+36. The system shall end the game when all lives are lost.
+37. The system shall display a Game Over screen when the game ends.
+38. The system shall display the final score on the Game Over screen.
 
-We want to keep the GUI as simple and clear as possible by having cards with relevant images to act as a way for the user to intuitively navigate the game. We want to implement a layout that would look like as if one were playing a match of the Pokémon Trading Card Game with physical cards in real life. Clicking on any of the cards will reveal that card's details to the player.
+### Persistence
 
-### 🎨 Assets
+39. The system shall save the user's highest scores using LocalStorage.
+40. The system shall load saved scores when the game starts.
+41. The system shall allow the user to view high scores from the title screen.
 
-We used [app.diagrams.net](https://app.diagrams.net/) to create the wireframes. Wireframes are the equivalent to the skeleton of a web app since they are used to describe the functionality of the product and the users experience.
+### Architecture & State Management
 
-We plan on following trends already found in other trading card video games, such as Pokémon Trading Card Game Online, Hearthstone, Magic the Gathering Arena, and Gwent.
+42. The system shall implement a PlayerStateMachine to manage player state transitions.
+43. The system shall implement player states: PlayerIdlingState, PlayerWalkingState, PlayerRunningState, PlayerPlantingState, and PlayerDead.
+44. The system shall implement a GhostStateMachine to manage ghost state transitions.
+45. The system shall implement ghost states: GhostHiddenState, GhostMaterializingState, and GhostAttackingState.
+46. The system shall use a hybrid collision system: tile-based collision for wall detection and hitbox-based collision for entity interactions.
+47. The system shall implement a Map with three layers: bottomLayer (floor graphics), collisionLayer (wall detection), and topLayer (decorative elements).
+48. The system shall use a Factory pattern to create Player, Ghost, and Flag entities.
+49. The system shall use a RoomManager to load room data from JSON configuration files.
+50. The system shall implement a FloorTransition class to handle smooth transitions between floors.
 
-The GUI will be kept simple and playful, as to make sure the game is easy to understand what each component does and is, as well as light hearted to keep to the Pokémon theme.
+### Map & Room System
 
-#### 🖼️ Images
+51. The system shall organize rooms hierarchically: Building → Floor → Room.
+52. The system shall store room metadata including: id, building name, floor number, room name, 360° image path, and description.
+53. The system shall use a Layer class to manage tile data with width, height, and tile retrieval methods.
+54. The system shall use a Tile class with static SIZE property for consistent tile rendering.
+55. The system shall provide Map methods: checkCollisionAtPixel() for collision detection and getRoomIdAt() for room identification.
 
--   Most images will be used from the well known community driven wikipedia site, [Bulbapedia](https://bulbapedia.bulbagarden.net/wiki/Main_Page).
--   Especially their [Trading Card Game section](<https://bulbapedia.bulbagarden.net/wiki/Full_Art_card_(TCG)>).
+### Game States
 
-#### ✏️ Fonts
+56. The system shall implement a RoundEnd state that displays after each round completion.
+57. The system shall transition from RoundEnd to Playing if lives > 0 and rounds < 5.
+58. The system shall transition from RoundEnd to GameOver if lives = 0 or rounds = 5.
+59. The system shall implement a Victory state for successful game completion (all 5 rounds completed with lives remaining).
+60. The system shall transition from RoundEnd to Victory when all 5 rounds are completed successfully.
 
-For fonts, a simple sans-serif like Roboto will look quite nice. It's a font that is legible, light on storage size, and fun to keep with the theme we're going for. We also used a more cartoonish Pokemon font for the title screen.
+### Player State Transitions
 
--   [Pokemon](https://www.dafont.com/pokemon.font)
--   [Roboto](https://fonts.google.com/specimen/Roboto)
+61. The system shall transition PlayerIdle to PlayerWalking when WASD keys are pressed.
+62. The system shall transition PlayerWalking to PlayerIdle when movement keys are released.
+63. The system shall transition PlayerIdle or PlayerWalking to PlayerRunning when Shift is pressed and stamina > 0.
+64. The system shall transition PlayerRunning to PlayerWalking when Shift is released or stamina is depleted.
+65. The system shall transition PlayerRunning to PlayerIdle when all movement keys are released.
+66. The system shall transition any player state to PlayerPlanting when Enter is pressed.
+67. The system shall transition PlayerPlanting to PlayerIdle after 2 seconds if planting is successful.
+68. The system shall transition PlayerPlanting to PlayerDead if the flag is planted in the wrong room, timer expires, or planting is interrupted.
+69. The system shall transition any player state to PlayerDead when the game timer expires.
+70. The system shall regenerate stamina when the player is in PlayerIdle or PlayerWalking states.
+71. The system shall drain stamina when the player is in PlayerRunning state.
 
-#### 🔊 Sounds
+### Ghost State Transitions
 
-All sounds were taken from [freesound.org](https://freesound.org) for the actions pertaining to cards.
+72. The system shall keep the ghost in GhostHidden state during normal gameplay.
+73. The system shall transition GhostHidden to GhostMaterializing when a failure condition occurs (wrong room, timeout, or interrupted planting).
+74. The system shall transition GhostMaterializing to GhostAttacking instantly when the ghost appears.
+75. The system shall transition GhostAttacking back to GhostHidden after the kill animation completes.
+76. The system shall make the ghost visible only during GhostMaterializing and GhostAttacking states.
 
--   [Shuffle cards](https://freesound.org/people/VKProduktion/sounds/217502/)
--   [Flip card](https://freesound.org/people/Splashdust/sounds/84322/)
+### Score & Timer Management
 
-### 📚 References
+77. The system shall use a ScoreManager class separate from RoundManager to handle score operations.
+78. The system shall use a GameTimer class with methods: start(), update(), isExpired(), and getTimeRemaining().
+79. The system shall track baseTime and timeRemaining in the GameTimer.
+80. The system shall use RoundManager to coordinate between ScoreManager, GameTimer, and target room selection.
 
--   [Pokemon Rulebook](http://assets.pokemon.com/assets/cms2/pdf/trading-card-game/rulebook/xy8-rulebook-en.pdf)
+### UI Components
+
+81. The system shall use a RoomImageViewer class to display and rotate 360° room images.
+82. The system shall track rotationAngle in RoomImageViewer for mouse-based rotation.
+83. The system shall use a UserInterface class to display staminaBar, timerDisplay, scoreDisplay, and livesDisplay.
+84. The system shall update UI components each frame through UserInterface.update() and UserInterface.render() methods.
+
+### State Diagram
+
+![State Diagram](./assets/images/proposal/StateDiagram.png)
+
+
+### Class Diagram
+
+![Class Diagram](./assets/images/proposal/ClassDiagram.png)
+
+### Wireframes
+
+#### Title Screen
+
+![Title Screen](./assets/images/proposal/TitleScreen.png)
+
+#### Gameplay Screen
+
+![Gameplay Screen](./assets/images/proposal/GamePlay.png)
+
+#### Round End Screen
+
+![Round End Screen](./assets/images/proposal/End.png)
+
+#### Game Over Screen
+
+![Game Over Screen](./assets/images/proposal/GameOver.png)
+
+#### Victory Screen
+
+![Victory Screen](./assets/images/proposal/Victory.png)
+
+### Assets
+Assets and textures will be sourced from [Modern Interiors](https://limezu.itch.io/moderninteriors).
+
+#### Images
+For the 360° images, panoramic photos will be taken of each room at John Abbott College. 
+
+#### Fonts
+- **Anton** (Anton Regular) - Used for the game logo/title with custom styling (letter-spacing: -1px, font-weight: 900, vertical scale: 1.1)
+
+#### Sounds
+
+Sound effects will be sourced from [Freesound.org](https://freesound.org), a community-driven database of free sound effects. The game will require the following sound effects:
+
+- **Footsteps** - Walking and running sounds for player movement
+- **Door sounds** - Opening and closing door effects
+- **Stairs** - Footstep sounds for ascending/descending stairs
+- **Ghost materializing** - Horror-themed sound for ghost appearance
+- **Ghost attack** - Sound effect for when the ghost kills the player
+- **Flag planting** - Success sound when flag is placed correctly
+- **Round complete** - Sound for successful round completion
+- **Game over** - Sound for game failure
+- **Victory** - Sound for completing all rounds successfully
