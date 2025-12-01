@@ -6,7 +6,7 @@ JAC Ghost Hunt is a horror-themed location guessing game set in John Abbott Coll
 
 The game architecture uses a state machine pattern for both player and ghost entities, allowing for smooth transitions between different behaviors. The player can be in one of five states: Idle, Walking, Running, Planting, or Dead. The ghost operates through three states: Hidden, Materializing, and Attacking. The game implements a hybrid collision system that uses tile-based collision for wall detection (similar to Pokemon-style games) and hitbox-based collision for entity interactions (similar to Zelda-style games).
 
-The map system is built with a three-layer architecture: a bottom layer for floor graphics, a collision layer for wall detection, and a top layer for decorative elements. Rooms are organized hierarchically within buildings and floors, with each room containing metadata such as building name, floor number, room name, 360° image, and description. The game uses a Factory pattern to create entities and objects, and a RoomManager to load room data from JSON configuration files.
+The map system is built with a three-layer architecture: a bottom layer for floor graphics, a collision layer for wall detection, and a top layer for decorative elements. Rooms are organized hierarchically within buildings and floors, with each room containing metadata such as building name, floor number, room name, 360° image, and description. The game uses a RoomManager to load room data from JSON configuration files, with entities created directly by the PlayState
 
 Players progress through up to five rounds, with each round ending in either a RoundEnd state (for successful completion) or GameOver state (for failure). The game tracks high scores using a ScoreManager that persists data to LocalStorage.
 
@@ -93,66 +93,64 @@ After all **five rounds** are completed or all three lives are lost the game end
 45. The system shall implement ghost states: GhostHiddenState, GhostMaterializingState, and GhostAttackingState.
 46. The system shall use a hybrid collision system: tile-based collision for wall detection and hitbox-based collision for entity interactions.
 47. The system shall implement a Map with three layers: bottomLayer (floor graphics), collisionLayer (wall detection), and topLayer (decorative elements).
-48. The system shall use a Factory pattern to create Player, Ghost, and Flag entities.
-49. The system shall use a RoomManager to load room data from JSON configuration files.
-50. The system shall implement a FloorTransition class to handle smooth transitions between floors.
+48. The system shall use a RoomManager to load room data from JSON configuration files.
+49. The system shall implement a FloorTransition class to handle smooth transitions between floors.
 
 ### Map & Room System
 
-51. The system shall organize rooms hierarchically: Building → Floor → Room.
-52. The system shall store room metadata including: id, building name, floor number, room name, 360° image path, and description.
-53. The system shall use a Layer class to manage tile data with width, height, and tile retrieval methods.
-54. The system shall use a Tile class with static SIZE property for consistent tile rendering.
-55. The system shall provide Map methods: checkCollisionAtPixel() for collision detection and getRoomIdAt() for room identification.
+50. The system shall organize rooms hierarchically: Building → Floor → Room.
+51. The system shall store room metadata including: id, building name, floor number, room name, 360° image path, and description.
+52. The system shall use a Layer class to manage tile data with width, height, and tile retrieval methods.
+53. The system shall use a Tile class with static SIZE property for consistent tile rendering.
+54. The system shall provide Map methods: checkCollisionAtPixel() for collision detection and getRoomIdAt() for room identification.
 
 ### Game States
 
-56. The system shall implement a RoundEnd state that displays after each round completion.
-57. The system shall transition from RoundEnd to Playing if lives > 0 and rounds < 5.
-58. The system shall transition from RoundEnd to GameOver if lives = 0 or rounds = 5.
-59. The system shall implement a Victory state for successful game completion (all 5 rounds completed with lives remaining).
-60. The system shall transition from RoundEnd to Victory when all 5 rounds are completed successfully.
+55. The system shall implement a RoundEnd state that displays after each round completion.
+56. The system shall transition from RoundEnd to Playing if lives > 0 and rounds < 5.
+57. The system shall transition from RoundEnd to GameOver if lives = 0 or rounds = 5.
+58. The system shall implement a Victory state for successful game completion (all 5 rounds completed with lives remaining).
+59. The system shall transition from RoundEnd to Victory when all 5 rounds are completed successfully.
 
 ### Player State Transitions
 
-61. The system shall transition PlayerIdle to PlayerWalking when WASD keys are pressed.
-62. The system shall transition PlayerWalking to PlayerIdle when movement keys are released.
-63. The system shall transition PlayerIdle or PlayerWalking to PlayerRunning when Shift is pressed and stamina > 0.
-64. The system shall transition PlayerRunning to PlayerWalking when Shift is released or stamina is depleted.
-65. The system shall transition PlayerRunning to PlayerIdle when all movement keys are released.
-66. The system shall transition any player state to PlayerPlanting when Enter is pressed.
-67. The system shall transition PlayerPlanting to PlayerIdle after 2 seconds if planting is successful.
-68. The system shall transition PlayerPlanting to PlayerDead if the flag is planted in the wrong room, timer expires, or planting is interrupted.
-69. The system shall transition any player state to PlayerDead when the game timer expires.
-70. The system shall regenerate stamina when the player is in PlayerIdle or PlayerWalking states.
-71. The system shall drain stamina when the player is in PlayerRunning state.
+60. The system shall transition PlayerIdle to PlayerWalking when WASD keys are pressed.
+61. The system shall transition PlayerWalking to PlayerIdle when movement keys are released.
+62. The system shall transition PlayerIdle or PlayerWalking to PlayerRunning when Shift is pressed and stamina > 0.
+63. The system shall transition PlayerRunning to PlayerWalking when Shift is released or stamina is depleted.
+64. The system shall transition PlayerRunning to PlayerIdle when all movement keys are released.
+65. The system shall transition any player state to PlayerPlanting when Enter is pressed.
+66. The system shall transition PlayerPlanting to PlayerIdle after 2 seconds if planting is successful.
+67. The system shall transition PlayerPlanting to PlayerDead if the flag is planted in the wrong room, timer expires, or planting is interrupted.
+68. The system shall transition any player state to PlayerDead when the game timer expires.
+69. The system shall regenerate stamina when the player is in PlayerIdle or PlayerWalking states.
+70. The system shall drain stamina when the player is in PlayerRunning state.
 
 ### Ghost State Transitions
 
-72. The system shall keep the ghost in GhostHidden state during normal gameplay.
-73. The system shall transition GhostHidden to GhostMaterializing when a failure condition occurs (wrong room, timeout, or interrupted planting).
-74. The system shall transition GhostMaterializing to GhostAttacking instantly when the ghost appears.
-75. The system shall transition GhostAttacking back to GhostHidden after the kill animation completes.
-76. The system shall make the ghost visible only during GhostMaterializing and GhostAttacking states.
+71. The system shall keep the ghost in GhostHidden state during normal gameplay.
+72. The system shall transition GhostHidden to GhostMaterializing when a failure condition occurs (wrong room, timeout, or interrupted planting).
+73. The system shall transition GhostMaterializing to GhostAttacking instantly when the ghost appears.
+74. The system shall transition GhostAttacking back to GhostHidden after the kill animation completes.
+75. The system shall make the ghost visible only during GhostMaterializing and GhostAttacking states.
 
 ### Score & Timer Management
 
-77. The system shall use a ScoreManager class separate from RoundManager to handle score operations.
-78. The system shall use a GameTimer class with methods: start(), update(), isExpired(), and getTimeRemaining().
-79. The system shall track baseTime and timeRemaining in the GameTimer.
-80. The system shall use RoundManager to coordinate between ScoreManager, GameTimer, and target room selection.
+76. The system shall use a ScoreManager class separate from RoundManager to handle score operations.
+77. The system shall use a GameTimer class with methods: start(), update(), isExpired(), and getTimeRemaining().
+78. The system shall track baseTime and timeRemaining in the GameTimer.
+79. The system shall use RoundManager to coordinate between ScoreManager, GameTimer, and target room selection.
 
 ### UI Components
 
-81. The system shall use a RoomImageViewer class to display and rotate 360° room images.
-82. The system shall track rotationAngle in RoomImageViewer for mouse-based rotation.
-83. The system shall use a UserInterface class to display staminaBar, timerDisplay, scoreDisplay, and livesDisplay.
-84. The system shall update UI components each frame through UserInterface.update() and UserInterface.render() methods.
+80. The system shall use a RoomImageViewer class to display and rotate 360° room images.
+81. The system shall track rotationAngle in RoomImageViewer for mouse-based rotation.
+82. The system shall use a UserInterface class to display staminaBar, timerDisplay, scoreDisplay, and livesDisplay.
+83. The system shall update UI components each frame through UserInterface.update() and UserInterface.render() methods.
 
 ### State Diagram
 
 ![State Diagram](./assets/images/proposal/StateDiagram.png)
-
 
 ### Class Diagram
 
@@ -181,24 +179,28 @@ After all **five rounds** are completed or all three lives are lost the game end
 ![Victory Screen](./assets/images/proposal/Victory.png)
 
 ### Assets
+
 Assets and textures will be sourced from [Modern Interiors](https://limezu.itch.io/moderninteriors).
 
 #### Images
-For the 360° images, panoramic photos will be taken of each room at John Abbott College. 
+
+For the 360° images, panoramic photos will be taken of each room at John Abbott College.
 
 #### Fonts
-- **Anton** (Anton Regular) - Used for the game logo/title with custom styling (letter-spacing: -1px, font-weight: 900, vertical scale: 1.1)
+
+-   **Anton** (Anton Regular) - Used for the game logo/title with custom styling (letter-spacing: -1px, font-weight: 900, vertical scale: 1.1)
+-   **Roboto** (Roboto Regular, Roboto Bold) - Used for UI elements, score display, timer, and button text
 
 #### Sounds
 
 Sound effects will be sourced from [Freesound.org](https://freesound.org), a community-driven database of free sound effects. The game will require the following sound effects:
 
-- **Footsteps** - Walking and running sounds for player movement
-- **Door sounds** - Opening and closing door effects
-- **Stairs** - Footstep sounds for ascending/descending stairs
-- **Ghost materializing** - Horror-themed sound for ghost appearance
-- **Ghost attack** - Sound effect for when the ghost kills the player
-- **Flag planting** - Success sound when flag is placed correctly
-- **Round complete** - Sound for successful round completion
-- **Game over** - Sound for game failure
-- **Victory** - Sound for completing all rounds successfully
+-   **Footsteps** - Walking and running sounds for player movement
+-   **Door sounds** - Opening and closing door effects
+-   **Stairs** - Footstep sounds for ascending/descending stairs
+-   **Ghost materializing** - Horror-themed sound for ghost appearance
+-   **Ghost attack** - Sound effect for when the ghost kills the player
+-   **Flag planting** - Success sound when flag is placed correctly
+-   **Round complete** - Sound for successful round completion
+-   **Game over** - Sound for game failure
+-   **Victory** - Sound for completing all rounds successfully

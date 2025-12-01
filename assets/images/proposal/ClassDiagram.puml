@@ -13,10 +13,14 @@ class PlayState {
     roomImageViewer
     entities
     objects
+    flags
     enter()
     exit()
     update()
     render()
+    createPlayer()
+    createGhost()
+    createFlag()
 }
 
 class GameEntity {
@@ -134,6 +138,7 @@ class RoundManager {
     lives
     targetRoomId
     scoreManager
+    roomManager
     startRound()
     endRound()
     checkRoundComplete()
@@ -183,26 +188,18 @@ class FloorTransition {
     render()
 }
 
-class Factory {
-    rooms
-    loadRooms()
-    createPlayer()
-    createGhost()
-    createFlag()
-    getRoom()
-    getRandomRoom()
-}
-
 class RoomManager {
     rooms
     loadFromJSON()
     getRoomById()
     getAllRooms()
+    getRandomRoom()
 }
 
 enum GameStateName {
     TitleScreen
     Play
+    RoundEnd
     GameOver
     Victory
 }
@@ -273,11 +270,9 @@ Building "1" -- "*" Floor
 Floor "1" -- "*" Room
 
 RoundManager "1" -- "1" ScoreManager
+RoundManager "1" -- "1" RoomManager
 RoundManager "1" -- "1" Room : targetRoom
 
-Factory "1" -- "1" RoomManager
-Factory -- GameEntity : creates
-Factory -- GameObject : creates
 RoomManager "1" -- "*" Room
 
 Player ..> PlayerStateName : uses
@@ -311,4 +306,3 @@ FloorTransition ..> Floor : transitions between
 Map ..> Room : references
 
 @enduml
-
