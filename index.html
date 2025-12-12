@@ -1,68 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
-		<title>Game Name</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>JACGUESSR</title>
 
-		<style>
-			* {
-				box-sizing: border-box;
-			}
+    <style>
+      * {
+        box-sizing: border-box;
+      }
 
-			body {
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				height: 100vh;
-				margin: 0;
-				background-color: #121212;
-			}
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #faf8f3;
+      }
 
-			canvas {
-				background-color: rgb(208, 244, 247);
-				outline: none;
-				/*
-			Uncomment this if you're doing a retro-style game.
-			image-rendering: crisp-edges;
-			image-rendering: pixelated;
-			*/
-			}
-		</style>
-	</head>
+      canvas {
+        background-color: #faf8f3;
+        outline: none;
+        /* https://developer.mozilla.org/en-US/docs/Games/Techniques/Crisp_pixel_art_look */
+        image-rendering: crisp-edges;
+        image-rendering: pixelated;
+        width: 960px;
+        height: 704px;
+      }
+    </style>
+  </head>
 
-	<body>
-		<ol style="color: white">
-			<li>
-				Read the
-				<a
-					href="https://vikramsinghmtl.github.io/420-5P6-Game-Programming/project/requirements"
-					>project requirements</a
-				>.
-			</li>
-			<li>
-				Replace the sample proposal in this repo with the one for your
-				game idea.
-			</li>
-			<li>Get the proposal greenlit by Vik.</li>
-			<li>
-				Place any assets in <code>assets/</code> and remember to update
-				<code>src/config.json</code>.
-			</li>
-			<li>
-				Decide on a height and width inside <code>src/globals.js</code>.
-				The height and width will most likely be determined based on the
-				size of the assets you find.
-			</li>
-			<li>
-				Start building the individual components of your game,
-				constantly referring to the proposal you wrote to keep yourself
-				on track.
-			</li>
-			<li>Delete this list from <code>index.html</code>.</li>
-			<li>Good luck, you got this!</li>
-		</ol>
-		<script type="module" src="./src/main.js"></script>
-	</body>
+  <body>
+    <script type="module" src="./src/main.js"></script>
+  </body>
 </html>

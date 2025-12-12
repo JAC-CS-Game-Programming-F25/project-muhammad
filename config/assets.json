@@ -17,12 +17,88 @@
 		"path": "./assets/images/sidewall.png",
 		"width": 256,
 		"height": 256
+	  },
+	  {
+		"name": "P-305",
+		"path": "./assets/rooms/P-305.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-306",
+		"path": "./assets/rooms/P-306.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-307",
+		"path": "./assets/rooms/P-307.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-308",
+		"path": "./assets/rooms/P-308.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-315",
+		"path": "./assets/rooms/P-315.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-315A",
+		"path": "./assets/rooms/P-315A.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-321",
+		"path": "./assets/rooms/P-321.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-322",
+		"path": "./assets/rooms/P-322.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-323",
+		"path": "./assets/rooms/P-323.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-325",
+		"path": "./assets/rooms/P-325.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-326",
+		"path": "./assets/rooms/P-326.HEIC",
+		"width": 1920,
+		"height": 1080
+	  },
+	  {
+		"name": "P-327",
+		"path": "./assets/rooms/P-327.HEIC",
+		"width": 1920,
+		"height": 1080
 	  }
 	],
 	"fonts": [
 	  {
 		"name": "font",
 		"path": "./assets/fonts/font.ttf"
+	  },
+	  {
+		"name": "Anton",
+		"path": "./assets/fonts/Anton-Regular.ttf"
 	  }
 	],
 	"sounds": [

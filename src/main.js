@@ -34,12 +34,12 @@ canvas.setAttribute('tabindex', '1'); // Allows the canvas to receive user input
 // Now that the canvas element has been prepared, we can add it to the DOM.
 document.body.appendChild(canvas);
 
-// Fetch the asset definitions from config.json.
+// Fetch the asset definitions from assets.json.
 const {
 	images: imageDefinitions,
 	fonts: fontDefinitions,
 	sounds: soundDefinitions,
-} = await fetch('./src/config.json').then((response) => response.json());
+} = await fetch('./config/assets.json').then((response) => response.json());
 
 // Load all the assets from their definitions.
 images.load(imageDefinitions);
@@ -52,7 +52,7 @@ stateMachine.add(GameStateName.GameOver, new GameOverState());
 stateMachine.add(GameStateName.Victory, new VictoryState());
 stateMachine.add(GameStateName.Play, new PlayState());
 
-stateMachine.change(GameStateName.Play);
+stateMachine.change(GameStateName.TitleScreen);
 
 const game = new Game(
 	stateMachine,
