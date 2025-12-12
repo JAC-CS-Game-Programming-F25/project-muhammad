@@ -1,11 +1,37 @@
 {
 	"images": [
-
+	  {
+		"name": "tiles",
+		"path": "./assets/images/Interiors_32x32.png",
+		"width": 256,
+		"height": 256
+	  },
+	  {
+		"name": "room-builder",
+		"path": "./assets/images/Room_Builder_32x32.png",
+		"width": 256,
+		"height": 256
+	  },
+	  {
+		"name": "sidewall",
+		"path": "./assets/images/sidewall.png",
+		"width": 256,
+		"height": 256
+	  }
 	],
 	"fonts": [
-
+	  {
+		"name": "font",
+		"path": "./assets/fonts/font.ttf"
+	  }
 	],
 	"sounds": [
-		
+	  {
+		"name": "sound",
+		"path": "./assets/sounds/sound.wav",
+		"size": 1,
+		"volume": 0.5
+	  }
 	]
-}
+  }
+  
