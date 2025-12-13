@@ -24,7 +24,7 @@ export default class Map {
         const tilesetManager = new TilesetManager();
         const sprites = tilesetManager.loadSpritesForRoom(mapDefinition);
 
-        // Find layers by name
+        // Find layers by name (like Alessandro project does)
         const bottomLayer = mapDefinition.layers.find(
             (l) => l.name === "Bottom" && l.type === "tilelayer"
         );
@@ -45,18 +45,12 @@ export default class Map {
         this.mapWidth = mapDefinition.width;
         this.mapHeight = mapDefinition.height;
 
-        // Calculate offsets to position map at center of canvas
-        const mapWidthPixels = this.mapWidth * Tile.SIZE;
-        const mapHeightPixels = this.mapHeight * Tile.SIZE;
-
-        // Get actual canvas dimensions (may be different from globals if resized)
-        const actualCanvasWidth = context.canvas.width;
-        const actualCanvasHeight = context.canvas.height;
-
-        // Center horizontally
-        this.offsetX = (actualCanvasWidth - mapWidthPixels) / 2;
-        // Center vertically
-        this.offsetY = (actualCanvasHeight - mapHeightPixels) / 2;
+        // Initialize offsets (will be updated by camera)
+        this.offsetX = 0;
+        this.offsetY = 0;
+        
+        // Camera zoom/scale - increase to make everything bigger
+        this.scale = 2.0;  // 2x zoom - shows less map, bigger character
 
         // Player will be added later when entity is created
         this.player = null;
@@ -65,30 +59,80 @@ export default class Map {
     update(dt) {
         if (this.player) {
             this.player.update(dt);
+            
+            // Update camera to follow player (center player on screen)
+            this.updateCamera();
+        }
+    }
+
+    /**
+     * Update camera position to keep player centered on screen
+     */
+    updateCamera() {
+        if (!this.player) return;
+
+        // Use the actual canvas internal resolution
+        const canvasWidth = context.canvas.width;
+        const canvasHeight = context.canvas.height;
+
+        // Account for scale when centering player
+        const scaledPlayerWidth = this.player.dimensions.x * this.scale;
+        const scaledPlayerHeight = this.player.dimensions.y * this.scale;
+        
+        // Calculate where the player should be on screen (center)
+        const targetX = (canvasWidth / 2 - scaledPlayerWidth / 2) / this.scale;
+        const targetY = (canvasHeight / 2 - scaledPlayerHeight / 2) / this.scale;
+
+        // Calculate map offset to center player (in unscaled coordinates)
+        this.offsetX = (targetX - this.player.canvasPosition.x) * this.scale;
+        this.offsetY = (targetY - this.player.canvasPosition.y) * this.scale;
+
+        // Clamp camera so we don't see beyond map edges
+        const mapWidthPixels = this.mapWidth * Tile.SIZE * this.scale;
+        const mapHeightPixels = this.mapHeight * Tile.SIZE * this.scale;
+
+        // If map is smaller than canvas, center it (don't scroll)
+        if (mapWidthPixels < canvasWidth) {
+            this.offsetX = (canvasWidth - mapWidthPixels) / 2;
+        } else {
+            // Clamp to map boundaries
+            this.offsetX = Math.min(0, this.offsetX);
+            this.offsetX = Math.max(canvasWidth - mapWidthPixels, this.offsetX);
+        }
+
+        if (mapHeightPixels < canvasHeight) {
+            this.offsetY = (canvasHeight - mapHeightPixels) / 2;
+        } else {
+            // Clamp to map boundaries
+            this.offsetY = Math.min(0, this.offsetY);
+            this.offsetY = Math.max(canvasHeight - mapHeightPixels, this.offsetY);
         }
     }
 
     render() {
-        // Apply offsets to position map at center
+        // Clear the entire canvas first to prevent duplication/ghosting
+        context.save();
+        context.fillStyle = "#000000";
+        context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+        context.restore();
+
+        // Apply camera transform (offset + scale)
         context.save();
         context.translate(this.offsetX, this.offsetY);
+        context.scale(this.scale, this.scale);  // Apply zoom
 
-        // Render bottom layer (floor tiles)
         if (this.bottomLayer) {
             this.bottomLayer.render();
         }
 
-        // Render collision layer (walls)
         if (this.collisionLayer) {
             this.collisionLayer.render();
         }
 
-        // Render player
         if (this.player) {
             this.player.render();
         }
 
-        // Render top layer (decorative elements above player)
         if (this.topLayer) {
             this.topLayer.render();
         }
@@ -142,18 +186,13 @@ export default class Map {
         const tileY = Math.floor((y - this.offsetY) / Tile.SIZE);
 
         // Check if coordinates are within bounds
-        if (
-            tileX < 0 ||
-            tileX >= this.mapWidth ||
-            tileY < 0 ||
-            tileY >= this.mapHeight
-        ) {
+        if (tileX < 0 || tileX >= this.mapWidth || tileY < 0 || tileY >= this.mapHeight) {
             return true; // Treat out of bounds as collision
         }
 
         // Get the tile at this position
         const tile = this.collisionLayer.getTile(tileX, tileY);
-
+        
         // If there's a tile here, it's a collision
         return tile !== null;
     }

@@ -89,8 +89,21 @@
 		"path": "./assets/rooms/P-327.jpg",
 		"width": 1920,
 		"height": 1080
+	  },
+	  {
+		"name": "character-idle",
+		"path": "./assets/images/character-idle.png",
+		"width": 768,
+		"height": 64
+	  },
+	  {
+		"name": "character-walk",
+		"path": "./assets/images/character-walk.png",
+		"width": 768,
+		"height": 64
 	  }
 	],
+	
 	"fonts": [
 	  {
 		"name": "font",
