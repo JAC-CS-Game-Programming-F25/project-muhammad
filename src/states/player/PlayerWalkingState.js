@@ -4,22 +4,25 @@ import Input from "../../../lib/Input.js";
 import { input } from "../../globals.js";
 
 export default class PlayerWalkingState extends PlayerMovingState {
-    static WALK_ANIMATION_TIME = 0.1;
+  static WALK_ANIMATION_TIME = 0.1;
 
-    constructor(player) {
-        super(player, player.speed, PlayerWalkingState.WALK_ANIMATION_TIME);
+  constructor(player) {
+    super(player, player.speed, PlayerWalkingState.WALK_ANIMATION_TIME);
+  }
+
+  shouldChangeState() {
+    if (
+      input.isKeyHeld(Input.KEYS.SHIFT) &&
+      this.player.stamina >= this.player.maxStamina
+    ) {
+      this.player.changeState(PlayerStateName.Running);
+      return true;
     }
 
-    shouldChangeState() {
-        if (input.isKeyHeld(Input.KEYS.SHIFT) && this.player.canRun()) {
-            this.player.changeState(PlayerStateName.Running);
-            return true;
-        }
+    return false;
+  }
 
-        return false;
-    }
-
-    onNoInput() {
-        this.player.changeState(PlayerStateName.Idling);
-    }
+  onNoInput() {
+    this.player.changeState(PlayerStateName.Idling);
+  }
 }

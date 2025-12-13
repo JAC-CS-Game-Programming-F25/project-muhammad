@@ -27,8 +27,8 @@ export default class PlayState extends State {
 
         // CREATE PLAYER
         // Spawn player at bottom-middle of map (2 tiles from bottom edge)
-        const startX = Math.floor(mapDefinition.width / 2) + 2;
-        const startY = mapDefinition.height - 4;
+        const startX = 20.5;
+        const startY = 63.4;
         
         this.player = new Player(
             {
@@ -158,10 +158,13 @@ export default class PlayState extends State {
 
         // 3. Map canvas area (grid-area: 1 / 4 / 6 / 6) - spans rows 1-5, columns 4-5
         canvas.style.gridArea = "1 / 4 / 6 / 6";
-        canvas.width = mapWidth * 3; // Increase internal resolution to show more of the map (3x zoom out)
-        canvas.height = baseHeight * 3;
-        canvas.style.width = `${mapWidth}px`;
-        canvas.style.height = `${baseHeight}px`;
+        
+        // Smaller canvas = bigger character (like a spotlight view)
+        // This shows less of the map but makes the character much more visible
+        canvas.width = mapWidth * 2;  // 320 * 2 = 640px internal resolution
+        canvas.height = baseHeight * 2;  // 600 * 2 = 1200px internal resolution
+        canvas.style.width = `${mapWidth}px`;  // Display size: 320px
+        canvas.style.height = `${baseHeight}px`;  // Display size: 600px
         canvas.style.backgroundColor = "#2a2a2a";
 
         // Add all elements to wrapper

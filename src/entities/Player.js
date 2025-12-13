@@ -11,6 +11,12 @@ import Character from "../enums/Character.js";
 import Tile from "../services/Tile.js";
 
 export default class Player extends GameEntity {
+    /**
+     * The character that the player controls in the map.
+     *
+     * @param {object} entityDefinition
+     * @param {Map} map - Reference to the game map
+     */
     constructor(entityDefinition = {}, map) {
         super(entityDefinition);
 
@@ -18,13 +24,24 @@ export default class Player extends GameEntity {
         this.dimensions = new Vector(GameEntity.WIDTH, GameEntity.HEIGHT);
 
         this.velocity = new Vector(0, 0);
-        this.speed = 50;
-        this.runSpeed = 130;
-
+        this.speed = 50;  // Walking speed
+        this.runSpeed = 80;  // Running speed - 60% faster but safe for collision
+        
+        // Stamina system
         this.stamina = 100;
         this.maxStamina = 100;
-        this.staminaDrainRate = 30;
-        this.staminaRegenRate = 20;
+        this.staminaDrainRate = 30;  // Stamina per second when running
+        this.staminaRegenRate = 20;  // Stamina per second when not running
+
+        // Map position (where player is in the map world)
+        // Convert tile position to pixel position
+        const tileX = entityDefinition.position ? entityDefinition.position.x : (entityDefinition.x || 0);
+        const tileY = entityDefinition.position ? entityDefinition.position.y : (entityDefinition.y || 0);
+        
+        this.mapPosition = new Vector(
+            tileX * Tile.SIZE,
+            tileY * Tile.SIZE
+        );
 
         this.stateMachine = this.initializeStateMachine();
 
@@ -37,34 +54,31 @@ export default class Player extends GameEntity {
     }
 
     update(dt) {
-        super.update(dt);
+        // Update state machine (handles input, collision, and position updates)
+        this.stateMachine.update(dt);
 
+        // Position is now updated directly in PlayerMovingState to prevent tunneling
 
-        this.canvasPosition.x += this.velocity.x * dt;
-        this.canvasPosition.y += this.velocity.y * dt;
+        // Update tile position for reference
+        this.position.x = Math.floor(this.mapPosition.x / Tile.SIZE);
+        this.position.y = Math.floor(this.mapPosition.y / Tile.SIZE);
 
-        this.position.x = Math.floor(this.canvasPosition.x / Tile.SIZE);
-        this.position.y = Math.floor(this.canvasPosition.y / Tile.SIZE);
-
-        if (
-            this.stateMachine.currentState.constructor.name !==
-            "PlayerRunningState"
-        ) {
-            this.stamina = Math.min(
-                this.maxStamina,
-                this.stamina + this.staminaRegenRate * dt
-            );
+        // Regenerate stamina when not running (idle or walking)
+        if (this.stateMachine.currentState.constructor.name !== 'PlayerRunningState') {
+            this.stamina = Math.min(this.maxStamina, this.stamina + this.staminaRegenRate * dt);
         }
 
+        // Update animation
         this.currentAnimation.update(dt);
         this.currentFrame = this.currentAnimation.getCurrentFrame();
     }
 
     render() {
-        const x = Math.floor(this.canvasPosition.x);
-        const y = Math.floor(this.canvasPosition.y - this.dimensions.y / 2);
+        // Player is always rendered at a fixed screen position (center of screen)
+        const screenX = Math.floor(this.canvasPosition.x);
+        const screenY = Math.floor(this.canvasPosition.y - this.dimensions.y / 2);
 
-        super.render(x, y);
+        super.render(screenX, screenY);
     }
 
     initializeStateMachine() {
@@ -79,6 +93,9 @@ export default class Player extends GameEntity {
         return stateMachine;
     }
 
+    /**
+     * Generate sprites from the character sprite sheets
+     */
     initializeSprites(character) {
         return Sprite.generateSpritesFromSpriteSheet(
             images.get(character),
@@ -87,10 +104,16 @@ export default class Player extends GameEntity {
         );
     }
 
+    /**
+     * Check if player has enough stamina to run
+     */
     canRun() {
         return this.stamina > 0;
     }
 
+    /**
+     * Drain stamina while running
+     */
     drainStamina(dt) {
         this.stamina = Math.max(0, this.stamina - this.staminaDrainRate * dt);
     }
