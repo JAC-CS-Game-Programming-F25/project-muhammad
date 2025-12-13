@@ -1,38 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>JACGUESSR</title>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+        <title>JACGUESSR</title>
 
-    <style>
-      * {
-        box-sizing: border-box;
-      }
+        <!-- Photo Sphere Viewer CSS -->
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.min.css"
+        />
 
-      body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-        margin: 0;
-        background-color: #faf8f3;
-      }
+        <style>
+            * {
+                box-sizing: border-box;
+            }
 
-      canvas {
-        background-color: #faf8f3;
-        outline: none;
-        /* https://developer.mozilla.org/en-US/docs/Games/Techniques/Crisp_pixel_art_look */
-        image-rendering: crisp-edges;
-        image-rendering: pixelated;
-        width: 960px;
-        height: 704px;
-      }
-    </style>
-  </head>
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                margin: 0;
+                background-color: #faf8f3;
+            }
 
-  <body>
-    <script type="module" src="./src/main.js"></script>
-  </body>
+            canvas {
+                background-color: #faf8f3;
+                outline: none;
+                image-rendering: crisp-edges;
+                image-rendering: pixelated;
+                width: 960px;
+                height: 704px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <!-- Import map for Photo Sphere Viewer -->
+        <script type="importmap">
+            {
+                "imports": {
+                    "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.js",
+                    "@photo-sphere-viewer/core": "https://cdn.jsdelivr.net/npm/@photo-sphere-viewer/core/index.module.js"
+                }
+            }
+        </script>
+
+        <script type="module" src="./src/main.js"></script>
+    </body>
 </html>

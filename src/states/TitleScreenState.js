@@ -1,101 +1,59 @@
 import Input from "../../lib/Input.js";
 import State from "../../lib/State.js";
 import GameStateName from "../enums/GameStateName.js";
+import Colour from "../enums/Colour.js";
 import {
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH,
-  context,
-  input,
-  stateMachine,
-  timer,
+    CANVAS_HEIGHT,
+    CANVAS_WIDTH,
+    context,
+    input,
+    stateMachine,
+    timer,
 } from "../globals.js";
 
-const BG_COLOR = "#faf8f3";
-const TITLE_COLOR = "#2563eb";
-const TEXT_COLOR = "#0f172a";
-
 export default class TitleScreenState extends State {
-  constructor() {
-    super();
-    this.showHowToPlay = false;
-  }
-
-  update(dt) {
-    timer.update(dt);
-
-    if (input.isKeyPressed(Input.KEYS.ENTER)) {
-      stateMachine.change(GameStateName.Play);
+    constructor() {
+        super();
+        this.timeElapsed = 0;
     }
 
-    if (input.isKeyPressed(Input.KEYS.H)) {
-      this.showHowToPlay = !this.showHowToPlay;
+    update(dt) {
+        timer.update(dt);
+        this.timeElapsed += dt;
+
+        if (input.isKeyPressed(Input.KEYS.ENTER)) {
+            stateMachine.change(GameStateName.Play);
+        }
     }
-  }
 
-  render() {
-    // Background
-    context.fillStyle = BG_COLOR;
-    context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    render() {
+        const pulse = Math.sin(this.timeElapsed * 2) * 0.5 + 0.5;
+        const bgRed = Math.floor(10 + pulse * 15);
+        context.fillStyle = `rgb(${bgRed}, 0, 0)`;
+        context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-    // Title
-    context.font = "100px Anton";
-    context.fillStyle = TITLE_COLOR;
-    context.textBaseline = "middle";
-    context.textAlign = "center";
-    context.fillText("JACGUESSR", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 70);
+        const titlePulse = Math.sin(this.timeElapsed * 3) * 0.3 + 0.7;
+        const titleRed = Math.floor(200 + titlePulse * 55);
+        const titleGreen = Math.floor(0 + titlePulse * 20);
+        
+        context.font = "100px Anton";
+        context.fillStyle = `rgb(${titleRed}, ${titleGreen}, 0)`;
+        context.textBaseline = "middle";
+        context.textAlign = "center";
+        
+        context.shadowColor = Colour.HorrorShadow;
+        context.shadowBlur = 20;
+        context.fillText("JACGUESSR", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
+        context.shadowBlur = 0;
 
-    // Options row
-    context.font = "32px Anton";
-    context.fillStyle = TEXT_COLOR;
-
-    const optionY = CANVAS_HEIGHT / 2 + 20;
-    const offsetX = 140;
-
-    context.fillText("Quick Play", CANVAS_WIDTH / 2 - offsetX, optionY);
-    context.fillText("How to Play", CANVAS_WIDTH / 2 + offsetX, optionY);
-
-    // Footer hint
-    context.font = "20px Anton";
-    context.fillStyle = TEXT_COLOR;
-    context.fillText(
-      "Press Enter to start, H for how-to",
-      CANVAS_WIDTH / 2,
-      CANVAS_HEIGHT - 50
-    );
-
-    // How-to overlay (toggle with H)
-    if (this.showHowToPlay) {
-      this.renderHowToOverlay();
+        const textFlash = Math.sin(this.timeElapsed * 4) > 0 ? 1 : 0.3;
+        const textRed = Math.floor(255 * textFlash);
+        const textGreen = Math.floor(100 * textFlash);
+        
+        context.font = "32px Anton";
+        context.fillStyle = `rgb(${textRed}, ${textGreen}, ${textGreen})`;
+        context.textBaseline = "middle";
+        context.textAlign = "center";
+        context.fillText("Press Enter to Play", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 50);
     }
-  }
-
-  renderHowToOverlay() {
-    const panelWidth = CANVAS_WIDTH * 0.8;
-    const panelHeight = 180;
-    const x = (CANVAS_WIDTH - panelWidth) / 2;
-    const y = CANVAS_HEIGHT / 2 + 80;
-
-    // Panel
-    context.fillStyle = "rgba(15, 23, 42, 0.08)";
-    context.fillRect(x, y, panelWidth, panelHeight);
-
-    // Text
-    context.font = "22px Anton";
-    context.fillStyle = TEXT_COLOR;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-
-    const lines = [
-      "How to Play:",
-      "Explore the campus map, match the room, and avoid the ghost.",
-      "Enter = Quick Play    H = Toggle this help",
-    ];
-
-    const lineSpacing = 32;
-    const startY = y + panelHeight / 2 - ((lines.length - 1) * lineSpacing) / 2;
-
-    lines.forEach((line, index) => {
-      context.fillText(line, CANVAS_WIDTH / 2, startY + index * lineSpacing);
-    });
-  }
 }
