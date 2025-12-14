@@ -11,6 +11,7 @@ import Sprite from "../../lib/Sprite.js";
 import Vector from "../../lib/Vector.js";
 import Character from "../enums/Character.js";
 import Tile from "../services/Tile.js";
+import SpeechBubble from "../objects/SpeechBubble.js";
 
 export default class Player extends GameEntity {
     /**
@@ -59,6 +60,8 @@ export default class Player extends GameEntity {
 
         // Sign that persists after placement
         this.sign = null;
+
+        this.speechBubble = null;
     }
 
     update(dt) {
@@ -85,6 +88,29 @@ export default class Player extends GameEntity {
         // Update animation
         this.currentAnimation.update(dt);
         this.currentFrame = this.currentAnimation.getCurrentFrame();
+
+        if (this.speechBubble) {
+            this.speechBubble.update(dt);
+
+            // Remove bubble when sound is done
+            if (this.speechBubble.shouldRemove()) {
+                this.speechBubble.destroy();
+                this.speechBubble = null;
+            }
+        }
+    }
+
+    /**
+     * Create a speech bubble above player's head
+     */
+    createSpeechBubble() {
+        // Remove existing bubble if any
+        if (this.speechBubble) {
+            this.speechBubble.destroy();
+        }
+
+        // Create new bubble
+        this.speechBubble = new SpeechBubble(this);
     }
 
     render() {

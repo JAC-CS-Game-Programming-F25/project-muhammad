@@ -122,6 +122,16 @@ export default class Map {
         this.player.mapPosition.y - this.player.dimensions.y / 2
       );
       this.player.sprites[this.player.currentFrame].render(renderX, renderY);
+      
+      // Render speech bubble above player
+      if (this.player.speechBubble) {
+        this.player.speechBubble.render();
+      }
+      
+      // Render particles from player's current state
+      if (this.player.stateMachine && this.player.stateMachine.currentState) {
+        this.player.stateMachine.currentState.render();
+      }
     }
 
     // Render top layer AFTER player (so top layer appears on top)

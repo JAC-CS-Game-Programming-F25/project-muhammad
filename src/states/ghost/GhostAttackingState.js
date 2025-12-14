@@ -1,16 +1,17 @@
 import State from "../../../lib/State.js";
-import { context, sounds } from "../../globals.js";
+import { context, sounds, timer } from "../../globals.js";
 import SoundName from "../../enums/SoundName.js";
+import Easing from "../../../lib/Easing.js";
 
 export default class GhostAttackingState extends State {
-    static FLOAT_SPEED = 2.0; // Speed of up/down movement
     static FLOAT_DISTANCE = 8; // How many pixels to move up/down
+    static FLOAT_DURATION = 1.5; // Duration of one complete up-down cycle (seconds)
 
     constructor(ghost) {
         super();
         this.ghost = ghost;
-        this.floatTimer = 0;
         this.baseY = 0; // Store the original Y position
+        this.isMovingUp = true; // Track direction
     }
 
     enter() {
@@ -20,27 +21,69 @@ export default class GhostAttackingState extends State {
 
         // Store the base Y position when entering this state
         this.baseY = this.ghost.mapPosition.y;
-        this.floatTimer = 0;
 
         // Play horror laugh sound in loop
         sounds.play(SoundName.HorrorLaugh);
+
+        // Start the floating animation
+        this.startFloatingAnimation();
     }
 
     exit() {
         // Stop horror laugh sound when leaving attacking state
         sounds.stop(SoundName.HorrorLaugh);
+        
+        // Clear any remaining tween tasks for this ghost
+        // (timer tasks will naturally finish or can be cleared if needed)
+    }
+
+    /**
+     * Start continuous floating animation using tween
+     */
+    startFloatingAnimation() {
+        // Move UP first
+        this.floatUp();
+    }
+
+    /**
+     * Tween ghost upward
+     */
+    floatUp() {
+        const targetY = this.baseY - GhostAttackingState.FLOAT_DISTANCE;
+        
+        timer.tween(
+            this.ghost.mapPosition,
+            { y: targetY },
+            GhostAttackingState.FLOAT_DURATION / 2, // Half the duration for up
+            Easing.easeInOutQuad, // Smooth easing
+            () => {
+                // When finished moving up, start moving down
+                this.floatDown();
+            }
+        );
+    }
+
+    /**
+     * Tween ghost downward
+     */
+    floatDown() {
+        const targetY = this.baseY + GhostAttackingState.FLOAT_DISTANCE;
+        
+        timer.tween(
+            this.ghost.mapPosition,
+            { y: targetY },
+            GhostAttackingState.FLOAT_DURATION / 2, // Half the duration for down
+            Easing.easeInOutQuad, // Smooth easing
+            () => {
+                // When finished moving down, start moving up again (loop)
+                this.floatUp();
+            }
+        );
     }
 
     update(dt) {
-        // Update float timer
-        this.floatTimer += dt * GhostAttackingState.FLOAT_SPEED;
-
-        // Calculate floating offset using sine wave for smooth up/down motion
-        const floatOffset =
-            Math.sin(this.floatTimer) * GhostAttackingState.FLOAT_DISTANCE;
-
-        // Apply floating offset to Y position
-        this.ghost.mapPosition.y = this.baseY + floatOffset;
+        // Tween handles the animation, so update() can be empty
+        // or used for other logic like checking player collision, etc.
     }
 
     render() {

@@ -7,22 +7,44 @@ import GhostStateName from "../enums/GhostStateName.js";
 import GhostHiddenState from "../states/ghost/GhostHiddenState.js";
 import GhostMaterializingState from "../states/ghost/GhostMaterializingState.js";
 import GhostAttackingState from "../states/ghost/GhostAttackingState.js";
+import GameEntity from "./GameEntity.js";
+import Direction from "../enums/Direction.js";
 
-export default class Ghost {
+export default class Ghost extends GameEntity {
     static WIDTH = 32;
     static HEIGHT = 32;
 
     /**
      * A ghost entity that appears when player fails.
      * Uses a state machine: Hidden -> Materializing -> Attacking -> Hidden
-     * 
+     * Extends GameEntity to leverage inheritance and polymorphism.
+     *
      * @param {Vector} mapPosition - Position in map coordinates (pixels)
      */
     constructor(mapPosition) {
+        // Call parent constructor with entity definition
+        super({
+            position: new Vector(
+                Math.floor(mapPosition.x / 32),
+                Math.floor(mapPosition.y / 32)
+            ),
+            dimensions: new Vector(Ghost.WIDTH, Ghost.HEIGHT),
+            direction: Direction.Down,
+        });
+
         this.mapPosition = mapPosition;
-        this.sprite = this.initializeSprite();
         this.isVisible = false;
         this.opacity = 0; // Start invisible, will fade in during materialization
+
+        // Initialize sprite
+        const ghostSprite = this.initializeSprite();
+
+        // Keep BOTH for backward compatibility with states
+        this.sprite = ghostSprite; // For ghost states (GhostMaterializingState, etc.)
+        this.sprites = [ghostSprite]; // For GameEntity compatibility
+        this.currentFrame = 0;
+
+        // Initialize state machine (GameEntity expects this)
         this.stateMachine = this.initializeStateMachine();
     }
 
@@ -40,30 +62,22 @@ export default class Ghost {
      */
     initializeStateMachine() {
         const stateMachine = new StateMachine();
-        
+
         // Add all states first
         stateMachine.add(GhostStateName.Hidden, new GhostHiddenState(this));
-        stateMachine.add(GhostStateName.Materializing, new GhostMaterializingState(this));
-        stateMachine.add(GhostStateName.Attacking, new GhostAttackingState(this));
-        
-        // Start in hidden state (currentState is set by add(), so change() will work)
+        stateMachine.add(
+            GhostStateName.Materializing,
+            new GhostMaterializingState(this)
+        );
+        stateMachine.add(
+            GhostStateName.Attacking,
+            new GhostAttackingState(this)
+        );
+
+        // Start in hidden state
         stateMachine.change(GhostStateName.Hidden);
-        
+
         return stateMachine;
-    }
-
-    /**
-     * Update ghost state machine
-     */
-    update(dt) {
-        this.stateMachine.update(dt);
-    }
-
-    /**
-     * Change ghost state
-     */
-    changeState(stateName) {
-        this.stateMachine.change(stateName);
     }
 
     /**
@@ -74,14 +88,13 @@ export default class Ghost {
     }
 
     /**
-     * Render the ghost at its position (delegates to current state)
+     * Override render to use custom rendering for ghost
+     * GameEntity.render() uses sprites array, but ghosts use state-based rendering
      */
     render() {
-        // StateMachine.render() expects a context parameter, but ghost states use global context
-        // So we just call the current state's render directly
+        // Delegate to current state for custom ghost rendering
         if (this.stateMachine && this.stateMachine.currentState) {
             this.stateMachine.currentState.render();
         }
     }
 }
-

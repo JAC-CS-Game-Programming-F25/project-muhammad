@@ -7,6 +7,7 @@ const ImageName = {
     Sign: "sign",
     Ghost: "ghost",
     CharacterDamage: "character-damage",
+    Bubble: "bubble",
 };
 
 export default ImageName;

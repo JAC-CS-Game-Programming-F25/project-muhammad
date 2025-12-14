@@ -125,6 +125,12 @@
             "path": "./assets/images/character_damage.png",
             "width": 416,
             "height": 64
+        },
+        {
+            "name": "bubble",
+            "path": "./assets/images/bubble.png",
+            "width": 32,
+            "height": 32
         }
     ],
 
@@ -190,6 +196,13 @@
             "size": 1,
             "volume": 0.5,
             "loop": true
+        },
+        {
+            "name": "herewegoagain",
+            "path": "./assets/sounds/herewegoagain.mp3",
+            "size": 1,
+            "volume": 1.0,
+            "loop": false
         }
     ]
 }

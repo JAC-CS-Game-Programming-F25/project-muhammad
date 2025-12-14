@@ -1,8 +1,4 @@
 import State from "../../lib/State.js";
-import Map from "../services/Map.js";
-import RoomLoader from "../services/RoomLoader.js";
-import RoundManager from "../services/RoundManager.js";
-import Player from "../entities/Player.js";
 import Ghost from "../entities/Ghost.js";
 import Vector from "../../lib/Vector.js";
 import UIOverlay from "../user-interface/UIOverlay.js";
@@ -12,493 +8,325 @@ import GameStateName from "../enums/GameStateName.js";
 import { sounds, context, stateMachine, canvas } from "../globals.js";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "../globals.js";
 import SaveManager from "../services/SaveManager.js";
-import Tile from "../services/Tile.js";
+import LayoutManager from "../services/LayoutManager.js";
+import JuiceEffects from "../services/JuiceEffects.js";
+import RoomViewerManager from "../services/RoomViewerManager.js";
+import GameStateLoader from "../services/GameStateLoader.js";
 
 export default class PlayState extends State {
     constructor() {
         super();
+        // Core game objects
         this.map = null;
-        this.roomLoader = null;
-        this.roomViewer = null;
-        this.currentRoomName = null;
-        this.pannellumContainer = null;
-        this.ViewerClass = null;
         this.player = null;
-        this.lastRoomCheck = null;
-        this.uiOverlay = null;
+        this.ghosts = [];
+
+        // Managers
+        this.roomLoader = null;
         this.roundManager = null;
+        this.layoutManager = new LayoutManager();
+        this.juiceEffects = new JuiceEffects();
+        this.roomViewerManager = new RoomViewerManager();
+
+        // UI
+        this.uiOverlay = null;
+        this.currentRoomName = null;
+        this.lastRoomCheck = null;
+
+        // State flags
         this.hasCheckedSign = false;
         this.hasHandledTimerExpiry = false;
-        this.ghosts = [];
-        this.wrapper = null; // Store reference to wrapper
-        this.damageStateTimer = 0;
+        this.hasShownHalfwayWarning = false;
         this.isInDamageState = false;
-        this.saveTimer = 0; // Timer for auto-saving
-        this.saveInterval = 5.0; // Auto-save every 5 seconds
+        this.damageStateTimer = 0;
+
+        // Auto-save
+        this.saveTimer = 0;
+        this.saveInterval = 5.0;
     }
 
     async enter(parameters = {}) {
         sounds.play(SoundName.HorrorAmbient);
 
-        // Check if we're loading a saved game
+        // Determine which loading mode to use
+        let gameState;
+
         if (parameters.loadGame) {
-            const saveData = SaveManager.loadGameState();
-            if (saveData) {
-                // Load map and create base objects
-                const mapDefinition = await fetch("./config/map.json").then(
-                    (response) => response.json()
-                );
+            gameState = await GameStateLoader.loadSavedGame();
+        } else if (parameters.roundManager) {
+            gameState = await GameStateLoader.continueFromPreviousRound(
+                parameters
+            );
+        } else {
+            gameState = await GameStateLoader.startNewGame();
+        }
 
-                this.map = new Map(mapDefinition);
-                this.roomLoader = new RoomLoader(mapDefinition);
-                this.roundManager = new RoundManager(this.roomLoader);
+        // Apply loaded state to PlayState
+        if (gameState) {
+            this.applyGameState(gameState);
+            await this.setupUI();
 
-                // Create player at saved position
-                const savedX = saveData.playerPosition.x / Tile.SIZE; // Convert to tiles
-                const savedY = saveData.playerPosition.y / Tile.SIZE;
-                this.player = new Player(
-                    {
-                        position: new Vector(savedX, savedY),
-                    },
-                    this.map
-                );
-                this.map.player = this.player;
-                this.player.roundManager = this.roundManager;
-
-                // Restore game state
-                SaveManager.restoreGameState(saveData, this.roundManager, this.player, this);
-
-                // Restore flags
-                this.hasCheckedSign = saveData.hasCheckedSign || false;
-                this.hasHandledTimerExpiry = saveData.hasHandledTimerExpiry || false;
-                this.ghosts = [];
-                this.damageStateTimer = 0;
-                this.isInDamageState = false;
-                this.saveTimer = 0;
-
-                // If we're loading from RoundEnd state, start the next round
-                if (saveData.gameStateName === GameStateName.RoundEnd && saveData.nextRound) {
-                    // We're continuing from RoundEnd - start the next round
-                    this.roundManager.currentRound = saveData.nextRound;
-                    this.roundManager.startRound();
-                    this.hasCheckedSign = false;
-                    this.hasHandledTimerExpiry = false;
-                    
-                    // Reset player to start position for new round
-                    const startX = 20.5;
-                    const startY = 63.4;
-                    this.player.reset(startX, startY);
-                }
-
-                // Setup layout and load the target room
-                this.setupLayout();
-                await this.waitForPhotoSphereViewer();
-                this.currentRoomName = this.roundManager.getTargetRoom();
-                this.loadRoomByName(this.currentRoomName);
-
-                // Focus canvas
-                if (canvas) {
-                    canvas.focus();
-                }
-                return; // Exit early, game loaded
+            // Show speech bubble when starting a new round (not when loading saved game)
+            if (this.player && this.roundManager && !parameters.loadGame) {
+                this.player.createSpeechBubble();
             }
         }
 
-        // Check if we're continuing from a previous round
-        if (parameters.roundManager) {
-            // Reuse existing objects
-            this.roundManager = parameters.roundManager;
-            this.roomLoader = parameters.roomLoader;
-            this.map = parameters.map;
-            this.player = parameters.player;
-
-            // Reset player for new round
-            const startX = 20.5;
-            const startY = 63.4;
-            this.player.reset(startX, startY);
-
-            // Reset flags for new round
-            this.hasCheckedSign = false;
-            this.hasHandledTimerExpiry = false;
-            this.ghosts = [];
-            this.damageStateTimer = 0;
-            this.isInDamageState = false;
-
-            // Setup layout and load new room
-            this.setupLayout();
-            await this.waitForPhotoSphereViewer();
-            this.loadRandomRoom();
-        } else {
-            // First round - create everything from scratch
-            // Delete any existing save when starting a new game
-            SaveManager.deleteSaveGame();
-            
-            const mapDefinition = await fetch("./config/map.json").then(
-                (response) => response.json()
-            );
-
-            this.map = new Map(mapDefinition);
-
-            const startX = 20.5;
-            const startY = 63.4;
-
-            this.player = new Player(
-                {
-                    position: new Vector(startX, startY),
-                },
-                this.map
-            );
-
-            this.map.player = this.player;
-            this.roomLoader = new RoomLoader(mapDefinition);
-
-            this.roundManager = new RoundManager(this.roomLoader);
-            this.roundManager.startRound();
-            this.hasCheckedSign = false;
-            this.hasHandledTimerExpiry = false;
-            this.ghosts = [];
-            this.damageStateTimer = 0;
-            this.isInDamageState = false;
-
-            this.player.roundManager = this.roundManager;
-
-            this.setupLayout();
-            await this.waitForPhotoSphereViewer();
-            this.loadRandomRoom();
-        }
-
-        // Focus canvas for keyboard input
+        // Focus canvas
         if (canvas) {
             canvas.focus();
         }
     }
 
-    setupLayout() {
-        const canvas = document.querySelector("canvas");
-        const baseWidth = 950;
-        const baseHeight = 600;
+    /**
+     * Apply loaded game state to PlayState properties
+     */
+    applyGameState(gameState) {
+        this.map = gameState.map;
+        this.roomLoader = gameState.roomLoader;
+        this.roundManager = gameState.roundManager;
+        this.player = gameState.player;
+        this.currentRoomName = gameState.currentRoomName;
 
-        const scaleX = window.innerWidth / baseWidth;
-        const scaleY = window.innerHeight / baseHeight;
-        const scale = Math.min(scaleX, scaleY);
+        // Apply flags
+        this.hasCheckedSign = gameState.flags.hasCheckedSign;
+        this.hasHandledTimerExpiry = gameState.flags.hasHandledTimerExpiry;
 
-        const imageWidth = Math.floor(baseWidth * 0.6);
-        const mapWidth = baseWidth - imageWidth;
+        // Reset round state
+        this.ghosts = [];
+        this.damageStateTimer = 0;
+        this.isInDamageState = false;
+        this.juiceEffects.reset();
+        this.hasShownHalfwayWarning = false;
+        this.saveTimer = 0;
+    }
 
-        // Create wrapper
-        this.wrapper = document.createElement("div");
-        this.wrapper.id = "play-state-wrapper";
-        this.wrapper.style.position = "fixed";
-        this.wrapper.style.left = "50%";
-        this.wrapper.style.top = "50%";
-        this.wrapper.style.transformOrigin = "center center";
-        this.wrapper.style.transform = `translate(-50%, -50%) scale(${scale})`;
-        this.wrapper.style.width = `${baseWidth}px`;
-        this.wrapper.style.height = `${baseHeight}px`;
-        this.wrapper.style.display = "flex";
-        this.wrapper.style.backgroundColor = "#0a0a0a";
+    /**
+     * Setup UI components (layout, viewer, overlay)
+     */
+    async setupUI() {
+        // Setup layout
+        this.layoutManager.setupLayout(canvas);
 
-        document.body.appendChild(this.wrapper);
+        // Wait for and load 360° viewer
+        await this.roomViewerManager.waitForPhotoSphereViewer();
+        const room = this.roomLoader.getRoom(this.currentRoomName);
+        const container = this.layoutManager.getPannellumContainer();
+        this.roomViewerManager.loadRoom(this.currentRoomName, room, container);
 
-        // 360° Image container
-        const imageContainer = document.createElement("div");
-        imageContainer.style.width = `${imageWidth}px`;
-        imageContainer.style.height = `${baseHeight}px`;
-        imageContainer.style.position = "relative";
-
-        // 360° viewer
-        this.pannellumContainer = document.createElement("div");
-        this.pannellumContainer.id = "photo-sphere-viewer";
-        this.pannellumContainer.style.width = "100%";
-        this.pannellumContainer.style.height = "100%";
-        this.pannellumContainer.style.backgroundColor = "#000";
-
-        // UI Overlay (canvas-based, no DOM container needed)
+        // Create UI overlay
         this.uiOverlay = new UIOverlay(this);
-
-        imageContainer.appendChild(this.pannellumContainer);
-
-        // Map canvas
-        canvas.style.width = `${mapWidth}px`;
-        canvas.style.height = `${baseHeight}px`;
-        canvas.width = mapWidth * 2;
-        canvas.height = baseHeight * 2;
-        canvas.style.backgroundColor = "#2a2a2a";
-
-        this.wrapper.appendChild(imageContainer);
-        this.wrapper.appendChild(canvas);
-    }
-
-    async waitForPhotoSphereViewer() {
-        return new Promise((resolve) => {
-            const checkInterval = setInterval(async () => {
-                try {
-                    const module = await import("@photo-sphere-viewer/core");
-                    this.ViewerClass = module.Viewer;
-                    clearInterval(checkInterval);
-                    resolve();
-                } catch (error) {
-                    // Still loading
-                }
-            }, 100);
-        });
-    }
-
-    loadRandomRoom() {
-        this.currentRoomName = this.roundManager.getTargetRoom();
-        this.loadRoomByName(this.currentRoomName);
-    }
-
-    loadRoomByName(roomName) {
-        this.currentRoomName = roomName;
-        const room = this.roomLoader.getRoom(roomName);
-
-        console.log("Loading room:", roomName, room);
-
-        if (this.ViewerClass && this.pannellumContainer) {
-            if (this.roomViewer) {
-                this.roomViewer.destroy();
-                this.roomViewer = null;
-            }
-
-            this.roomViewer = new this.ViewerClass({
-                container: this.pannellumContainer,
-                panorama: room.imagePath,
-                navbar: false,
-                defaultZoomLvl: 0,
-                minFov: 30,
-                maxFov: 90,
-                mousewheel: true,
-                mousemove: true,
-            });
-        }
     }
 
     exit() {
-        // Don't save on exit - we only save during active gameplay (auto-save)
-        // This prevents saving when transitioning to RoundEndState/GameOverState
-        
         sounds.stop(SoundName.HorrorAmbient);
         sounds.stop(SoundName.HorrorLaugh);
-
-        if (this.roomViewer) {
-            this.roomViewer.destroy();
-            this.roomViewer = null;
-        }
-
+        this.roomViewerManager.cleanup();
         if (this.uiOverlay) {
             this.uiOverlay.destroy();
-            this.uiOverlay = null;
         }
+        this.layoutManager.cleanup(canvas, CANVAS_WIDTH, CANVAS_HEIGHT);
+    }
 
-        if (this.wrapper) {
-            const canvas = document.querySelector("canvas");
-
-            // Remove wrapper completely
-            this.wrapper.remove();
-            this.wrapper = null;
-
-            // Reset canvas - let globals.js resizeCanvas handle the scaling
-            if (canvas) {
-                // Remove from current parent
-                if (canvas.parentNode) {
-                    canvas.parentNode.removeChild(canvas);
-                }
-
-                // Reset canvas dimensions (actual pixel dimensions)
-                canvas.width = CANVAS_WIDTH;
-                canvas.height = CANVAS_HEIGHT;
-
-                // Clear inline styles so resizeCanvas can work
-                canvas.style.removeProperty("width");
-                canvas.style.removeProperty("height");
-                canvas.style.removeProperty("position");
-                canvas.style.removeProperty("left");
-                canvas.style.removeProperty("top");
-                canvas.style.removeProperty("transform");
-                canvas.style.backgroundColor = "#0a0a0a";
-
-                // Re-append to body
-                document.body.appendChild(canvas);
-
-                // Trigger resize to apply proper scaling
-                window.dispatchEvent(new Event("resize"));
-            }
-        }
+    /**
+     * POLYMORPHISM: Get all entities for uniform treatment
+     */
+    getAllEntities() {
+        const entities = [];
+        if (this.player) entities.push(this.player);
+        entities.push(...this.ghosts);
+        return entities;
     }
 
     update(dt) {
-        if (this.map) {
-            this.map.update(dt);
+        if (this.map) this.map.update(dt);
+
+        // POLYMORPHIC UPDATE: Treat all entities uniformly
+        for (const entity of this.getAllEntities()) {
+            entity.update(dt);
         }
 
-        for (const ghost of this.ghosts) {
-            ghost.update(dt);
-        }
+        // Update game objects
+        if (this.player?.sign) this.player.sign.update(dt);
 
-        if (this.roundManager) {
+        // JUICE: Update visual effects
+        this.juiceEffects.update(dt);
+
+        // Update game timer
+        if (this.roundManager?.gameTimer) {
             this.roundManager.gameTimer.update(dt);
+        }
 
-            if (
-                this.roundManager.checkRoundComplete() &&
-                !this.hasHandledTimerExpiry
-            ) {
-                this.hasHandledTimerExpiry = true;
-                this.roundManager.endRound(false);
-                console.log("user lost - timer expired");
-                this.spawnGhosts();
+        // Game logic
+        this.updateGameLogic(dt);
+        this.updateAutoSave(dt);
+        if (this.uiOverlay) this.uiOverlay.update(dt);
+    }
+
+    updateGameLogic(dt) {
+        // Timer expiry
+        if (
+            this.roundManager?.checkRoundComplete() &&
+            !this.hasHandledTimerExpiry
+        ) {
+            this.hasHandledTimerExpiry = true;
+            this.roundManager.endRound(false);
+            this.spawnGhosts();
+        }
+
+        // JUICE: Halfway timer warning
+        if (this.roundManager && !this.hasShownHalfwayWarning) {
+            const timeRemaining = this.roundManager.gameTimer.getTimeRemaining();
+            const baseTime = this.roundManager.gameTimer.getBaseTime();
+            const halfTime = baseTime / 2;
+            
+            if (timeRemaining <= halfTime && timeRemaining > halfTime - 0.5) {
+                this.hasShownHalfwayWarning = true;
+                this.juiceEffects.createFloatingWarning(
+                    "HALFWAY!",
+                    CANVAS_WIDTH / 2,
+                    CANVAS_HEIGHT / 3
+                );
             }
         }
 
-        // Check if we need to transition to RoundEnd state after damage state (5 seconds)
+        // Damage state timer
         if (this.isInDamageState) {
             this.damageStateTimer -= dt;
             if (this.damageStateTimer <= 0) {
-                // Save with next round number before transitioning to RoundEnd
-                const nextRound = this.roundManager.currentRound < 5 
-                    ? this.roundManager.currentRound + 1 
-                    : null; // Game over if round 5
-                
-                if (this.player && this.roundManager) {
-                    SaveManager.saveGameState({
-                        player: this.player,
-                        roundManager: this.roundManager,
-                        hasCheckedSign: this.hasCheckedSign,
-                        hasHandledTimerExpiry: this.hasHandledTimerExpiry,
-                        nextRound: nextRound,
-                        gameStateName: GameStateName.RoundEnd,
-                    });
-                }
-                
-                // Transition to RoundEnd state after 5 seconds
-                stateMachine.change(GameStateName.RoundEnd, {
-                    roundManager: this.roundManager,
-                    roomLoader: this.roomLoader,
-                    map: this.map,
-                    player: this.player,
-                });
-                this.isInDamageState = false;
-                this.damageStateTimer = 0;
+                this.transitionToRoundEnd();
             }
         }
 
-        // Auto-save game state every few seconds
-        if (this.player && this.roundManager) {
-            this.saveTimer += dt;
-            if (this.saveTimer >= this.saveInterval) {
-                SaveManager.saveGameState({
-                    player: this.player,
-                    roundManager: this.roundManager,
-                    hasCheckedSign: this.hasCheckedSign,
-                    hasHandledTimerExpiry: this.hasHandledTimerExpiry,
-                });
-                this.saveTimer = 0; // Reset timer
-            }
+        // Check sign placement
+        if (this.player?.sign && this.roundManager && !this.hasCheckedSign) {
+            this.checkSignPlacement();
         }
 
+        // Update room detection
         if (this.player && this.roomLoader && this.currentRoomName) {
-            this.player.update(dt);
+            this.updateRoomDetection();
+        }
+    }
 
-            if (this.player.sign && this.roundManager && !this.hasCheckedSign) {
-                const isSigning =
-                    this.player.stateMachine.currentState.constructor.name ===
-                    "PlayerSigningState";
+    checkSignPlacement() {
+        const isSigning =
+            this.player.stateMachine.currentState.constructor.name ===
+            "PlayerSigningState";
+        if (isSigning) return;
 
-                if (!isSigning) {
-                    const playerX = this.player.sign.position.x;
-                    const playerY = this.player.sign.position.y;
-                    const roomAtSignPosition =
-                        this.roomLoader.getRoomAtPosition(playerX, playerY);
-                    const targetRoom = this.roundManager.getTargetRoom();
+        const roomAtSign = this.roomLoader.getRoomAtPosition(
+            this.player.sign.position.x,
+            this.player.sign.position.y
+        );
+        const targetRoom = this.roundManager.getTargetRoom();
+        this.hasCheckedSign = true;
 
-                    this.hasCheckedSign = true;
+        if (roomAtSign === targetRoom) {
+            this.handleCorrectRoom();
+        } else {
+            this.handleWrongRoom();
+        }
+    }
 
-                    if (roomAtSignPosition === targetRoom) {
-                        this.roundManager.endRound(true);
-                        console.log("user won - correct room!");
+    handleCorrectRoom() {
+        this.roundManager.endRound(true);
 
-                        // Save with next round number before transitioning to RoundEnd
-                        const nextRound = this.roundManager.currentRound < 5 
-                            ? this.roundManager.currentRound + 1 
-                            : null; // Game over if round 5
-                        
-                        SaveManager.saveGameState({
-                            player: this.player,
-                            roundManager: this.roundManager,
-                            hasCheckedSign: this.hasCheckedSign,
-                            hasHandledTimerExpiry: this.hasHandledTimerExpiry,
-                            nextRound: nextRound,
-                            gameStateName: GameStateName.RoundEnd,
-                        });
+        this.transitionToRoundEnd();
+    }
 
-                        // FIXED: Transition to RoundEnd state
-                        stateMachine.change(GameStateName.RoundEnd, {
-                            roundManager: this.roundManager,
-                            roomLoader: this.roomLoader,
-                            map: this.map,
-                            player: this.player,
-                        });
-                    } else {
-                        this.roundManager.endRound(false);
-                        console.log("user lost - wrong room");
-                        this.spawnGhosts();
-                    }
-                }
-            }
+    handleWrongRoom() {
+        this.roundManager.endRound(false);
+        this.spawnGhosts();
+    }
 
-            const playerX = this.player.mapPosition.x;
-            const playerY = this.player.mapPosition.y;
-            const roomAtPosition = this.roomLoader.getRoomAtPosition(
-                playerX,
-                playerY
-            );
+    transitionToRoundEnd() {
+        const nextRound =
+            this.roundManager.currentRound < 5
+                ? this.roundManager.currentRound + 1
+                : null;
 
-            if (
-                roomAtPosition === this.currentRoomName &&
-                roomAtPosition !== this.lastRoomCheck
-            ) {
-                this.lastRoomCheck = roomAtPosition;
-            } else if (roomAtPosition !== this.currentRoomName) {
-                this.lastRoomCheck = null;
-            }
+        if (this.player && this.roundManager) {
+            SaveManager.saveGameState({
+                player: this.player,
+                roundManager: this.roundManager,
+                hasCheckedSign: this.hasCheckedSign,
+                hasHandledTimerExpiry: this.hasHandledTimerExpiry,
+                nextRound: nextRound,
+                gameStateName: GameStateName.RoundEnd,
+            });
         }
 
-        if (this.uiOverlay) {
-            this.uiOverlay.update(dt);
+        stateMachine.change(GameStateName.RoundEnd, {
+            roundManager: this.roundManager,
+            roomLoader: this.roomLoader,
+            map: this.map,
+            player: this.player,
+        });
+
+        this.isInDamageState = false;
+        this.damageStateTimer = 0;
+    }
+
+    updateRoomDetection() {
+        const roomAtPosition = this.roomLoader.getRoomAtPosition(
+            this.player.mapPosition.x,
+            this.player.mapPosition.y
+        );
+
+        if (
+            roomAtPosition === this.currentRoomName &&
+            roomAtPosition !== this.lastRoomCheck
+        ) {
+            this.lastRoomCheck = roomAtPosition;
+        } else if (roomAtPosition !== this.currentRoomName) {
+            this.lastRoomCheck = null;
+        }
+    }
+
+    updateAutoSave(dt) {
+        if (!this.player || !this.roundManager) return;
+
+        this.saveTimer += dt;
+        if (this.saveTimer >= this.saveInterval) {
+            SaveManager.saveGameState({
+                player: this.player,
+                roundManager: this.roundManager,
+                hasCheckedSign: this.hasCheckedSign,
+                hasHandledTimerExpiry: this.hasHandledTimerExpiry,
+            });
+            this.saveTimer = 0;
         }
     }
 
     spawnGhosts() {
-        if (this.player) {
-            // Transition player to damage state (death animation)
-            this.player.changeState(PlayerStateName.Damage);
-            this.isInDamageState = true;
-            this.damageStateTimer = 5.0; // 5 seconds before transitioning to RoundEnd
+        if (!this.player) return;
 
-            const playerHeadY =
-                this.player.mapPosition.y - this.player.dimensions.y / 2;
-            const playerX = this.player.mapPosition.x;
+        this.player.changeState(PlayerStateName.Damage);
+        this.isInDamageState = true;
+        this.damageStateTimer = 5.0;
 
-            const triangleSpacing = 32;
-            const triangleHeight = 40;
+        // JUICE: Screen shake!
+        this.juiceEffects.startScreenShake(10, 0.6);
 
-            this.ghosts = [
-                new Ghost(new Vector(playerX, playerHeadY - triangleHeight)),
-                new Ghost(
-                    new Vector(playerX - triangleSpacing, playerHeadY - 8)
-                ),
-                new Ghost(
-                    new Vector(playerX + triangleSpacing, playerHeadY - 8)
-                ),
-            ];
+        const playerHeadY =
+            this.player.mapPosition.y - this.player.dimensions.y / 2;
+        const playerX = this.player.mapPosition.x;
 
-            for (const ghost of this.ghosts) {
-                ghost.materialize();
-            }
+        this.ghosts = [
+            new Ghost(new Vector(playerX, playerHeadY - 40)),
+            new Ghost(new Vector(playerX - 32, playerHeadY - 8)),
+            new Ghost(new Vector(playerX + 32, playerHeadY - 8)),
+        ];
+
+        for (const ghost of this.ghosts) {
+            ghost.materialize();
         }
     }
 
     render() {
+        const shakeApplied = this.juiceEffects.applyScreenShake();
+
         if (this.map) {
             this.map.render();
 
@@ -517,6 +345,11 @@ export default class PlayState extends State {
                 context.restore();
             }
         }
+
+        this.juiceEffects.restoreScreenShake(shakeApplied);
+
+        // JUICE: Render floating text
+        this.juiceEffects.renderFloatingText();
 
         if (this.uiOverlay) {
             this.uiOverlay.render();

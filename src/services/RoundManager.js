@@ -28,9 +28,9 @@ export default class RoundManager {
         // Reset sign flag for new round
         this.hasSignedThisRound = false;
         
-        // Calculate base time: 60 - (currentRound - 1) * 5
-        // Round 1: 60s, Round 2: 55s, Round 3: 50s, Round 4: 45s, Round 5: 40s
-        const baseTime = 60 - (this.currentRound - 1) * 5;
+        // Calculate base time: 20 seconds for all rounds
+        // Round 1: 20s, Round 2: 20s, Round 3: 20s, Round 4: 20s, Round 5: 20s
+        const baseTime = 20;
         
         // Start the timer
         this.gameTimer.start(baseTime);
