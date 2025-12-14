@@ -4,6 +4,7 @@ import StateMachine from "../../lib/StateMachine.js";
 import PlayerWalkingState from "../states/player/PlayerWalkingState.js";
 import PlayerIdlingState from "../states/player/PlayerIdlingState.js";
 import PlayerRunningState from "../states/player/PlayerRunningState.js";
+import PlayerSigningState from "../states/player/PlayerSigningState.js";
 import PlayerStateName from "../enums/PlayerStateName.js";
 import Sprite from "../../lib/Sprite.js";
 import Vector from "../../lib/Vector.js";
@@ -47,10 +48,14 @@ export default class Player extends GameEntity {
 
         this.idleSprites = this.initializeSprites(Character.CharacterIdle);
         this.walkSprites = this.initializeSprites(Character.CharacterWalk);
+        this.signSprites = this.initializeSprites(Character.CharacterSign);
 
         this.sprites = this.idleSprites;
         this.currentAnimation =
             this.stateMachine.currentState.animation[this.direction];
+        
+        // Sign that persists after placement
+        this.sign = null;
     }
 
     update(dt) {
@@ -87,6 +92,7 @@ export default class Player extends GameEntity {
         stateMachine.add(PlayerStateName.Walking, new PlayerWalkingState(this));
         stateMachine.add(PlayerStateName.Idling, new PlayerIdlingState(this));
         stateMachine.add(PlayerStateName.Running, new PlayerRunningState(this));
+        stateMachine.add(PlayerStateName.Signing, new PlayerSigningState(this));
 
         stateMachine.change(PlayerStateName.Idling);
 

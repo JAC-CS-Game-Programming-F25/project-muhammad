@@ -111,6 +111,11 @@ export default class Map {
       if (this.topLayer) this.topLayer.render();
     }
 
+    // Render sign before player (so player appears on top)
+    if (this.player && this.player.sign) {
+      this.player.sign.render();
+    }
+
     // Render player at their map position
     if (this.player) {
       const renderX = Math.floor(this.player.mapPosition.x);

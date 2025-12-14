@@ -101,6 +101,18 @@
             "path": "./assets/images/character-walk.png",
             "width": 768,
             "height": 64
+        },
+        {
+            "name": "character-sign",
+            "path": "./assets/images/character-sign.png",
+            "width": 1536,
+            "height": 64
+        },
+        {
+            "name": "sign",
+            "path": "./assets/images/sign.png",
+            "width": 64,
+            "height": 64
         }
     ],
 
@@ -128,6 +140,34 @@
         {
             "name": "horror-ambient",
             "path": "./assets/sounds/horror-ambient.mp3",
+            "size": 1,
+            "volume": 0.2,
+            "loop": true
+        },
+        {
+            "name": "idle-breathing",
+            "path": "./assets/sounds/idle_breathing.wav",
+            "size": 1,
+            "volume": 1,
+            "loop": true
+        },
+        {
+            "name": "walking-breathing",
+            "path": "./assets/sounds/walking_breathing.wav",
+            "size": 1,
+            "volume": 0.5,
+            "loop": true
+        },
+        {
+            "name": "running-breathing",
+            "path": "./assets/sounds/running_breathing.flac",
+            "size": 1,
+            "volume": 0.5,
+            "loop": true
+        },
+        {
+            "name": "sign-sound",
+            "path": "./assets/sounds/sign_sound.wav",
             "size": 1,
             "volume": 0.5,
             "loop": true

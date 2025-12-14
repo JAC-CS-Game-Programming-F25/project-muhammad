@@ -4,6 +4,8 @@ import RoomLoader from "../services/RoomLoader.js";
 import Player from "../entities/Player.js";
 import Vector from "../../lib/Vector.js";
 import UIOverlay from "../user-interface/UIOverlay.js";
+import SoundName from "../enums/SoundName.js";
+import { sounds } from "../globals.js";
 
 export default class PlayState extends State {
     constructor() {
@@ -29,6 +31,9 @@ export default class PlayState extends State {
     }
 
     async enter() {
+        // Play horror ambient music on loop
+        sounds.play(SoundName.HorrorAmbient);
+
         const mapDefinition = await fetch("./config/map.json").then(
             (response) => response.json()
         );
@@ -150,6 +155,9 @@ export default class PlayState extends State {
 
 
     exit() {
+        // Stop the horror ambient music when leaving play state
+        sounds.stop(SoundName.HorrorAmbient);
+
         if (this.roomViewer) {
             this.roomViewer.destroy();
         }

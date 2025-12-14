@@ -2,7 +2,8 @@ import Animation from "../../../lib/Animation.js";
 import State from "../../../lib/State.js";
 import Direction from "../../enums/Direction.js";
 import PlayerStateName from "../../enums/PlayerStateName.js";
-import { input } from "../../globals.js";
+import SoundName from "../../enums/SoundName.js";
+import { input, sounds } from "../../globals.js";
 import Input from "../../../lib/Input.js";
 
 export default class PlayerIdlingState extends State {
@@ -35,9 +36,23 @@ export default class PlayerIdlingState extends State {
     enter() {
         this.player.sprites = this.player.idleSprites;
         this.player.currentAnimation = this.animation[this.player.direction];
+        
+        // Play idle breathing sound
+        sounds.play(SoundName.IdleBreathing);
+    }
+    
+    exit() {
+        // Stop idle breathing sound
+        sounds.stop(SoundName.IdleBreathing);
     }
 
     update() {
+        // Check for signing (Enter key)
+        if (input.isKeyPressed(Input.KEYS.ENTER)) {
+            this.player.changeState(PlayerStateName.Signing);
+            return;
+        }
+
         // Check for running (Shift + WASD)
         if (input.isKeyHeld(Input.KEYS.SHIFT) && this.player.canRun()) {
             if (
