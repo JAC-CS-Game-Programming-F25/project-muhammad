@@ -6,6 +6,7 @@ export default class GameTimer {
         this.baseTime = 0;
         this.timeRemaining = 0;
         this.isRunning = false;
+        this.hasExpired = false; // Track if timer has already expired
     }
 
     /**
@@ -16,6 +17,7 @@ export default class GameTimer {
         this.baseTime = baseTime;
         this.timeRemaining = baseTime;
         this.isRunning = true;
+        this.hasExpired = false; // Reset expiry flag
     }
 
     /**
@@ -24,9 +26,15 @@ export default class GameTimer {
      */
     update(dt) {
         if (this.isRunning && this.timeRemaining > 0) {
+            const wasPositive = this.timeRemaining > 0;
             this.timeRemaining -= dt;
-            if (this.timeRemaining < 0) {
+            if (this.timeRemaining <= 0) {
                 this.timeRemaining = 0;
+                this.isRunning = false; // Stop timer when it expires
+                // Mark as expired only if it just transitioned from > 0 to <= 0
+                if (wasPositive) {
+                    this.hasExpired = true;
+                }
             }
         }
     }
@@ -37,6 +45,18 @@ export default class GameTimer {
      */
     isExpired() {
         return this.timeRemaining <= 0;
+    }
+
+    /**
+     * Check if the timer just expired (only returns true once)
+     * @returns {boolean} True if timer just expired this frame
+     */
+    justExpired() {
+        if (this.hasExpired) {
+            this.hasExpired = false; // Reset after checking
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -75,6 +95,7 @@ export default class GameTimer {
     reset() {
         this.timeRemaining = this.baseTime;
         this.isRunning = false;
+        this.hasExpired = false;
     }
 }
 

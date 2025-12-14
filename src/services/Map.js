@@ -92,7 +92,7 @@ export default class Map {
   render() {
     // Clear the entire canvas first
     context.save();
-    context.fillStyle = "#000000";
+    context.fillStyle = Colour.CanvasBlack;
     context.fillRect(0, 0, context.canvas.width, context.canvas.height);
     context.restore();
 

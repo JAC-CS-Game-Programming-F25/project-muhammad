@@ -27,6 +27,25 @@ const Colour = {
 	StaticOverlayRgb: '255, 255, 255',
 	ScanlineBlack: '#000000',
 	ScanlineWhite: '#ffffff',
+	// UI Colors
+	UIPanelTransparent: 'rgba(0, 0, 0, 0)',
+	UIPanelDark: 'rgba(20, 20, 20, 0.4)',
+	UILabelText: '#ccc',
+	UIBarBackground: '#1a1a1a',
+	UIStaminaBar: '#888',
+	UITimerBar: '#bbb',
+	UIInfoText: '#aaa',
+	// Warning/Alert Colors
+	WarningRed: 'rgb(255, 100, 100)',
+	WarningRedPulseRgb: '220, 100, 100', // RGB values for pulse calculation
+	WarningRedBarRgb: '200, 60, 60', // RGB values for pulse calculation
+	// Background Colors
+	CanvasBlack: '#000000',
+	CanvasDark: '#0a0a0a',
+	// Debug Colors
+	DebugRed: 'rgba(255, 0, 0, 0.3)',
+	// Shadow Colors
+	ShadowBlack: 'black',
 };
 
 export default Colour;

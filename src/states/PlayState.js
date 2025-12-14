@@ -164,10 +164,14 @@ export default class PlayState extends State {
     }
 
     updateGameLogic(dt) {
-        // Timer expiry
+        // Timer expiry - only trigger once when timer first expires
+        // Don't trigger if round already ended (e.g., from wrong sign placement)
         if (
-            this.roundManager?.checkRoundComplete() &&
-            !this.hasHandledTimerExpiry
+            this.roundManager?.gameTimer &&
+            this.roundManager.gameTimer.justExpired() &&
+            !this.hasHandledTimerExpiry &&
+            !this.isInDamageState && // Don't trigger if already in damage state
+            this.ghosts.length === 0 // Don't trigger if ghosts already spawned
         ) {
             this.hasHandledTimerExpiry = true;
             this.roundManager.endRound(false);

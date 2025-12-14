@@ -10,8 +10,8 @@ import FontName from "../enums/FontName.js";
 export default class UIOverlay extends Panel {
     constructor(playState) {
         super(0.5, 0.5, 12, 6, {
-            borderColour: "rgba(0, 0, 0, 0)", // No border on panel
-            panelColour: "rgba(20, 20, 20, 0.4)", // Light black, almost transparent
+            borderColour: Colour.UIPanelTransparent, // No border on panel
+            panelColour: Colour.UIPanelDark, // Light black, almost transparent
             padding: 18,
         });
 
@@ -83,7 +83,7 @@ export default class UIOverlay extends Panel {
         context.save();
 
         // Light black, almost transparent fill - NO BORDER
-        context.fillStyle = "rgba(20, 20, 20, 0.4)";
+        context.fillStyle = Colour.UIPanelDark;
         context.fillRect(x, y, w, h);
 
         // NO BORDER AT ALL
@@ -106,8 +106,8 @@ export default class UIOverlay extends Panel {
         context.save();
         context.font = `11px ${FontName.CourierNew}`; // Bigger font
         context.fillStyle = isWarning
-            ? `rgba(220, 100, 100, ${pulse})`
-            : "#ccc";
+            ? `rgba(${Colour.WarningRedPulseRgb}, ${pulse})`
+            : Colour.UILabelText;
         context.textBaseline = "top";
         context.textAlign = "left";
         context.fillText(label, 0, labelY);
@@ -115,7 +115,7 @@ export default class UIOverlay extends Panel {
 
         // Bar background
         context.save();
-        context.fillStyle = "#1a1a1a";
+        context.fillStyle = Colour.UIBarBackground;
         context.fillRect(0, barY, barWidth, barHeight);
         context.restore();
 
@@ -128,13 +128,14 @@ export default class UIOverlay extends Panel {
 
             if (isWarning) {
                 // Pulsing red for warning
-                context.fillStyle = `rgba(${200 * pulse}, 60, 60, 1)`;
+                const pulseValue = 200 * pulse;
+                context.fillStyle = `rgba(${pulseValue}, 60, 60, 1)`;
             } else if (label === "STAMINA") {
                 // Grey
-                context.fillStyle = "#888";
+                context.fillStyle = Colour.UIStaminaBar;
             } else {
                 // Beige
-                context.fillStyle = "#bbb";
+                context.fillStyle = Colour.UITimerBar;
             }
 
             context.fillRect(0, barY, fillWidth, barHeight);
@@ -147,7 +148,7 @@ export default class UIOverlay extends Panel {
 
         context.save();
         context.font = `11px ${FontName.CourierNew}`; // Bigger font
-        context.fillStyle = "#aaa";
+        context.fillStyle = Colour.UIInfoText;
         context.textBaseline = "top";
 
         // Round on LEFT

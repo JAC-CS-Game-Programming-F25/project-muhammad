@@ -1,4 +1,5 @@
 import { context } from "../globals.js";
+import Colour from "../enums/Colour.js";
 
 export default class Tile {
     static SIZE = 32;
@@ -48,7 +49,7 @@ export default class Tile {
             // Debug: Show missing tiles as red squares
             if (window.DEBUG_TILES) {
                 context.save();
-                context.fillStyle = "rgba(255, 0, 0, 0.3)";
+                context.fillStyle = Colour.DebugRed;
                 context.fillRect(
                     x * Tile.SIZE,
                     y * Tile.SIZE,

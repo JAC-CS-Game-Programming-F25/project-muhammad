@@ -1,4 +1,5 @@
 import { context } from "../globals.js";
+import Colour from "../enums/Colour.js";
 
 export default class JuiceEffects {
     constructor() {
@@ -20,7 +21,7 @@ export default class JuiceEffects {
     /**
      * Create a floating warning text
      */
-    createFloatingWarning(text, x, y, color = "rgb(255, 100, 100)") {
+    createFloatingWarning(text, x, y, color = Colour.WarningRed) {
         this.floatingText = {
             text: text,
             x: x,
@@ -96,7 +97,7 @@ export default class JuiceEffects {
         context.textBaseline = "middle";
 
         // Add shadow for emphasis
-        context.shadowColor = "black";
+        context.shadowColor = Colour.ShadowBlack;
         context.shadowBlur = 8;
         context.shadowOffsetX = 3;
         context.shadowOffsetY = 3;
