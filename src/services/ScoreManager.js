@@ -78,3 +78,4 @@ export default class ScoreManager {
         this.currentScore = 0;
     }
 }
+

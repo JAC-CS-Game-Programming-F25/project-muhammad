@@ -77,3 +77,4 @@ export default class GameTimer {
         this.isRunning = false;
     }
 }
+

@@ -12,18 +12,29 @@ import {
     stateMachine,
     timer,
     sounds,
+    canvas,
 } from "../globals.js";
+import SaveManager from "../services/SaveManager.js";
 
 export default class TitleScreenState extends State {
     constructor() {
         super();
         this.timeElapsed = 0;
         this.grainOffset = 0;
+        this.hasSaveGame = false;
     }
 
     enter() {
+        // Check if save game exists
+        this.hasSaveGame = SaveManager.hasSaveGame();
+
         // Play horror ambient music on loop
         sounds.play(SoundName.HorrorAmbient);
+
+        // Focus canvas for keyboard input
+        if (canvas) {
+            canvas.focus();
+        }
     }
 
     exit() {
@@ -36,7 +47,18 @@ export default class TitleScreenState extends State {
         this.timeElapsed += dt;
         this.grainOffset += dt * 60; // Grain animation speed
 
+        // Check for continue game (C key) if save exists
+        if (this.hasSaveGame && input.isKeyPressed(Input.KEYS.C)) {
+            // Load saved game
+            stateMachine.change(GameStateName.Play, { loadGame: true });
+        }
+
+        // Check for new game (ENTER key)
         if (input.isKeyPressed(Input.KEYS.ENTER)) {
+            // Delete old save if starting new game
+            if (this.hasSaveGame) {
+                SaveManager.deleteSaveGame();
+            }
             stateMachine.change(GameStateName.Play);
         }
     }
@@ -85,7 +107,10 @@ export default class TitleScreenState extends State {
                 yPos + CANVAS_HEIGHT / layers
             );
             fogGradient.addColorStop(0, Colour.TitleFogDark);
-            fogGradient.addColorStop(0.5, `rgba(${Colour.TitleFogMidRgb}, ${alpha})`);
+            fogGradient.addColorStop(
+                0.5,
+                `rgba(${Colour.TitleFogMidRgb}, ${alpha})`
+            );
             fogGradient.addColorStop(1, Colour.TitleFogDark);
 
             context.fillStyle = fogGradient;
@@ -115,7 +140,9 @@ export default class TitleScreenState extends State {
         context.save();
 
         // Multiple text shadows for glow effect
-        context.shadowColor = `rgba(${Colour.TitleShadowLightRgb}, ${glowPulse * 0.3})`;
+        context.shadowColor = `rgba(${Colour.TitleShadowLightRgb}, ${
+            glowPulse * 0.3
+        })`;
         context.shadowBlur = 30;
 
         // Main title
@@ -134,7 +161,9 @@ export default class TitleScreenState extends State {
 
         // Secondary glow layer
         context.shadowBlur = 50;
-        context.shadowColor = `rgba(${Colour.TitleShadowDarkRgb}, ${glowPulse * 0.2})`;
+        context.shadowColor = `rgba(${Colour.TitleShadowDarkRgb}, ${
+            glowPulse * 0.2
+        })`;
         context.fillText(
             "JAC GUESSR",
             CANVAS_WIDTH / 2 + distort,
@@ -153,14 +182,32 @@ export default class TitleScreenState extends State {
         context.fillStyle = `rgba(${Colour.PromptTextRgb}, ${breathe})`;
         context.textBaseline = "middle";
         context.textAlign = "center";
-        context.shadowColor = `rgba(${Colour.PromptShadowRgb}, ${breathe * 0.5})`;
+        context.shadowColor = `rgba(${Colour.PromptShadowRgb}, ${
+            breathe * 0.5
+        })`;
         context.shadowBlur = 15;
 
-        context.fillText(
-            "PRESS ENTER TO BEGIN",
-            CANVAS_WIDTH / 2,
-            CANVAS_HEIGHT / 2 + 80
-        );
+        if (this.hasSaveGame) {
+            // Show continue option if save exists
+            context.fillText(
+                "PRESS ENTER FOR NEW GAME",
+                CANVAS_WIDTH / 2,
+                CANVAS_HEIGHT / 2 + 60
+            );
+            context.font = `24px ${FontName.CourierNew}`;
+            context.fillText(
+                "PRESS C TO CONTINUE",
+                CANVAS_WIDTH / 2,
+                CANVAS_HEIGHT / 2 + 100
+            );
+        } else {
+            // Show normal start prompt
+            context.fillText(
+                "PRESS ENTER TO BEGIN",
+                CANVAS_WIDTH / 2,
+                CANVAS_HEIGHT / 2 + 80
+            );
+        }
         context.restore();
     }
 
@@ -186,7 +233,9 @@ export default class TitleScreenState extends State {
         context.putImageData(imageData, 0, 0);
 
         // Add static overlay
-        context.fillStyle = `rgba(${Colour.StaticOverlayRgb}, ${Math.random() * 0.02})`;
+        context.fillStyle = `rgba(${Colour.StaticOverlayRgb}, ${
+            Math.random() * 0.02
+        })`;
         context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     }
 

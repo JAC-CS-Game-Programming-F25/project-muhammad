@@ -7,19 +7,19 @@ import Input from "../lib/Input.js";
 
 export const canvas = document.createElement("canvas");
 export const context =
-  canvas.getContext("2d") || new CanvasRenderingContext2D();
+    canvas.getContext("2d") || new CanvasRenderingContext2D();
 
 // Replace these values according to how big you want your canvas.
 export const CANVAS_WIDTH = 900;
 export const CANVAS_HEIGHT = 600;
 
 const resizeCanvas = () => {
-  const scaleX = window.innerWidth / CANVAS_WIDTH;
-  const scaleY = window.innerHeight / CANVAS_HEIGHT;
-  const scale = Math.min(scaleX, scaleY); // Maintain aspect ratio
+    const scaleX = window.innerWidth / CANVAS_WIDTH;
+    const scaleY = window.innerHeight / CANVAS_HEIGHT;
+    const scale = Math.min(scaleX, scaleY); // Maintain aspect ratio
 
-  canvas.style.width = `${CANVAS_WIDTH * scale}px`;
-  canvas.style.height = `${CANVAS_HEIGHT * scale}px`;
+    canvas.style.width = `${CANVAS_WIDTH * scale}px`;
+    canvas.style.height = `${CANVAS_HEIGHT * scale}px`;
 };
 
 // Listen for canvas resize events
@@ -35,4 +35,4 @@ export const timer = new Timer();
 export const input = new Input(canvas);
 export const sounds = new Sounds();
 
-export const DEBUG = false; 
+export const DEBUG = false;

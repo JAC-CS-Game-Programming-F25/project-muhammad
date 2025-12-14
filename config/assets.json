@@ -113,6 +113,18 @@
             "path": "./assets/images/sign.png",
             "width": 64,
             "height": 64
+        },
+        {
+            "name": "ghost",
+            "path": "./assets/images/ghost.png",
+            "width": 32,
+            "height": 32
+        },
+        {
+            "name": "character-damage",
+            "path": "./assets/images/character_damage.png",
+            "width": 416,
+            "height": 64
         }
     ],
 
@@ -168,6 +180,13 @@
         {
             "name": "sign-sound",
             "path": "./assets/sounds/sign_sound.wav",
+            "size": 1,
+            "volume": 0.5,
+            "loop": true
+        },
+        {
+            "name": "horror-laugh",
+            "path": "./assets/sounds/horrorlaugh.wav",
             "size": 1,
             "volume": 0.5,
             "loop": true

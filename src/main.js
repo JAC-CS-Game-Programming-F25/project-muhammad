@@ -23,8 +23,8 @@ import {
 } from './globals.js';
 import PlayState from './states/PlayState.js';
 import GameOverState from './states/GameOverState.js';
-import VictoryState from './states/VictoryState.js';
 import TitleScreenState from './states/TitleScreenState.js';
+import RoundEndState from './states/RoundEndState.js';
 
 // Set the dimensions of the play area.
 canvas.width = CANVAS_WIDTH;
@@ -49,8 +49,8 @@ sounds.load(soundDefinitions);
 // Add all the states to the state machine.
 stateMachine.add(GameStateName.TitleScreen, new TitleScreenState());
 stateMachine.add(GameStateName.GameOver, new GameOverState());
-stateMachine.add(GameStateName.Victory, new VictoryState());
 stateMachine.add(GameStateName.Play, new PlayState());
+stateMachine.add(GameStateName.RoundEnd, new RoundEndState());
 
 stateMachine.change(GameStateName.TitleScreen);
 

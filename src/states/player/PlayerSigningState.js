@@ -3,7 +3,7 @@ import PlayerStateName from "../../enums/PlayerStateName.js";
 import Direction from "../../enums/Direction.js";
 import SoundName from "../../enums/SoundName.js";
 import Timer from "../../../lib/Timer.js";
-import Sign from "../../entities/Sign.js";
+import Sign from "../../objects/Sign.js";
 import { sounds } from "../../globals.js";
 
 export default class PlayerSigningState extends State {

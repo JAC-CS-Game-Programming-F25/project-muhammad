@@ -101,14 +101,13 @@ export default class Map {
     context.scale(this.zoom, this.zoom);
     context.translate(this.offsetX / this.zoom, this.offsetY / this.zoom);
 
-    // Render visible tiles
+    // Render visible tiles (bottom and collision layers only)
     if (this.player) {
-      this.renderVisibleArea();
+      this.renderBottomAndCollisionLayers();
     } else {
       // Fallback: render everything if no player
       if (this.bottomLayer) this.bottomLayer.render();
       if (this.collisionLayer) this.collisionLayer.render();
-      if (this.topLayer) this.topLayer.render();
     }
 
     // Render sign before player (so player appears on top)
@@ -125,6 +124,14 @@ export default class Map {
       this.player.sprites[this.player.currentFrame].render(renderX, renderY);
     }
 
+    // Render top layer AFTER player (so top layer appears on top)
+    if (this.player) {
+      this.renderTopLayer();
+    } else {
+      // Fallback: render top layer if no player
+      if (this.topLayer) this.topLayer.render();
+    }
+
     context.restore();
 
     if (DEBUG) {
@@ -133,9 +140,9 @@ export default class Map {
   }
 
   /**
-   * Render only the tiles visible around the player (viewport culling)
+   * Render only the bottom and collision layers visible around the player (viewport culling)
    */
-  renderVisibleArea() {
+  renderBottomAndCollisionLayers() {
     const canvasWidth = context.canvas.width;
     const canvasHeight = context.canvas.height;
 
@@ -155,9 +162,35 @@ export default class Map {
     const startY = Math.max(0, playerTileY - visibleRadiusY);
     const endY = Math.min(this.mapHeight - 1, playerTileY + visibleRadiusY);
 
-    // Render only visible tiles
+    // Render only visible tiles for bottom and collision layers
     this.renderLayerArea(this.bottomLayer, startX, endX, startY, endY);
     this.renderLayerArea(this.collisionLayer, startX, endX, startY, endY);
+  }
+
+  /**
+   * Render only the top layer visible around the player (viewport culling)
+   */
+  renderTopLayer() {
+    const canvasWidth = context.canvas.width;
+    const canvasHeight = context.canvas.height;
+
+    // Player position in tiles (using mapPosition, not screen position)
+    const playerTileX = Math.floor(this.player.mapPosition.x / Tile.SIZE);
+    const playerTileY = Math.floor(this.player.mapPosition.y / Tile.SIZE);
+
+    // Calculate visible radius in tiles (adjusted for zoom)
+    const visibleRadiusX =
+      Math.ceil(canvasWidth / Tile.SIZE / this.zoom / 2) + 2;
+    const visibleRadiusY =
+      Math.ceil(canvasHeight / Tile.SIZE / this.zoom / 2) + 2;
+
+    // Calculate tile range to render
+    const startX = Math.max(0, playerTileX - visibleRadiusX);
+    const endX = Math.min(this.mapWidth - 1, playerTileX + visibleRadiusX);
+    const startY = Math.max(0, playerTileY - visibleRadiusY);
+    const endY = Math.min(this.mapHeight - 1, playerTileY + visibleRadiusY);
+
+    // Render only visible tiles for top layer
     this.renderLayerArea(this.topLayer, startX, endX, startY, endY);
   }
 

@@ -5,6 +5,7 @@ import PlayerWalkingState from "../states/player/PlayerWalkingState.js";
 import PlayerIdlingState from "../states/player/PlayerIdlingState.js";
 import PlayerRunningState from "../states/player/PlayerRunningState.js";
 import PlayerSigningState from "../states/player/PlayerSigningState.js";
+import PlayerDamageState from "../states/player/PlayerDamageState.js";
 import PlayerStateName from "../enums/PlayerStateName.js";
 import Sprite from "../../lib/Sprite.js";
 import Vector from "../../lib/Vector.js";
@@ -25,35 +26,37 @@ export default class Player extends GameEntity {
         this.dimensions = new Vector(GameEntity.WIDTH, GameEntity.HEIGHT);
 
         this.velocity = new Vector(0, 0);
-        this.speed = 50;  // Walking speed
-        this.runSpeed = 80;  // Running speed - 60% faster but safe for collision
-        
+        this.speed = 50; // Walking speed
+        this.runSpeed = 80; // Running speed - 60% faster but safe for collision
+
         // Stamina system
         this.stamina = 100;
         this.maxStamina = 100;
-        this.staminaDrainRate = 30;  // Stamina per second when running
-        this.staminaRegenRate = 20;  // Stamina per second when not running
+        this.staminaDrainRate = 30; // Stamina per second when running
+        this.staminaRegenRate = 20; // Stamina per second when not running
 
         // Map position (where player is in the map world)
         // Convert tile position to pixel position
-        const tileX = entityDefinition.position ? entityDefinition.position.x : (entityDefinition.x || 0);
-        const tileY = entityDefinition.position ? entityDefinition.position.y : (entityDefinition.y || 0);
-        
-        this.mapPosition = new Vector(
-            tileX * Tile.SIZE,
-            tileY * Tile.SIZE
-        );
+        const tileX = entityDefinition.position
+            ? entityDefinition.position.x
+            : entityDefinition.x || 0;
+        const tileY = entityDefinition.position
+            ? entityDefinition.position.y
+            : entityDefinition.y || 0;
+
+        this.mapPosition = new Vector(tileX * Tile.SIZE, tileY * Tile.SIZE);
 
         this.stateMachine = this.initializeStateMachine();
 
         this.idleSprites = this.initializeSprites(Character.CharacterIdle);
         this.walkSprites = this.initializeSprites(Character.CharacterWalk);
         this.signSprites = this.initializeSprites(Character.CharacterSign);
+        this.damageSprites = this.initializeSprites(Character.CharacterDamage);
 
         this.sprites = this.idleSprites;
         this.currentAnimation =
             this.stateMachine.currentState.animation[this.direction];
-        
+
         // Sign that persists after placement
         this.sign = null;
     }
@@ -69,8 +72,14 @@ export default class Player extends GameEntity {
         this.position.y = Math.floor(this.mapPosition.y / Tile.SIZE);
 
         // Regenerate stamina when not running (idle or walking)
-        if (this.stateMachine.currentState.constructor.name !== 'PlayerRunningState') {
-            this.stamina = Math.min(this.maxStamina, this.stamina + this.staminaRegenRate * dt);
+        if (
+            this.stateMachine.currentState.constructor.name !==
+            "PlayerRunningState"
+        ) {
+            this.stamina = Math.min(
+                this.maxStamina,
+                this.stamina + this.staminaRegenRate * dt
+            );
         }
 
         // Update animation
@@ -81,7 +90,9 @@ export default class Player extends GameEntity {
     render() {
         // Player is always rendered at a fixed screen position (center of screen)
         const screenX = Math.floor(this.canvasPosition.x);
-        const screenY = Math.floor(this.canvasPosition.y - this.dimensions.y / 2);
+        const screenY = Math.floor(
+            this.canvasPosition.y - this.dimensions.y / 2
+        );
 
         super.render(screenX, screenY);
     }
@@ -93,6 +104,7 @@ export default class Player extends GameEntity {
         stateMachine.add(PlayerStateName.Idling, new PlayerIdlingState(this));
         stateMachine.add(PlayerStateName.Running, new PlayerRunningState(this));
         stateMachine.add(PlayerStateName.Signing, new PlayerSigningState(this));
+        stateMachine.add(PlayerStateName.Damage, new PlayerDamageState(this));
 
         stateMachine.change(PlayerStateName.Idling);
 
@@ -122,5 +134,31 @@ export default class Player extends GameEntity {
      */
     drainStamina(dt) {
         this.stamina = Math.max(0, this.stamina - this.staminaDrainRate * dt);
+    }
+
+    /**
+     * Reset player to starting state for new round
+     * @param {number} x - Spawn X position in tiles
+     * @param {number} y - Spawn Y position in tiles
+     */
+    reset(x, y) {
+        // Reset position
+        this.position.x = x;
+        this.position.y = y;
+        this.mapPosition.x = x * Tile.SIZE;
+        this.mapPosition.y = y * Tile.SIZE;
+
+        // Reset velocity
+        this.velocity.x = 0;
+        this.velocity.y = 0;
+
+        // Remove sign
+        this.sign = null;
+
+        // Reset stamina
+        this.stamina = this.maxStamina;
+
+        // Reset to idle state
+        this.changeState(PlayerStateName.Idling);
     }
 }

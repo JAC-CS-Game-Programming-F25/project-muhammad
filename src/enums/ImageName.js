@@ -5,6 +5,8 @@ const ImageName = {
     CharacterSign: "character-sign",
     Interiors: "tiles",
     Sign: "sign",
+    Ghost: "ghost",
+    CharacterDamage: "character-damage",
 };
 
 export default ImageName;

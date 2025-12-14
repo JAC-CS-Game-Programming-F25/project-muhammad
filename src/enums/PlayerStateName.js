@@ -3,6 +3,7 @@ const PlayerStateName = {
     Walking: "walking",
     Running: "running",
     Signing: "signing",
+    Damage: "Damage",
 };
 
 export default PlayerStateName;

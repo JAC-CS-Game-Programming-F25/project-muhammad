@@ -1,68 +1,57 @@
-import State from "../../lib/State.js";
-import Ghost from "../entities/Ghost.js";
-import { images } from "../globals.js";
-import ImageName from "../enums/ImageName.js";
-import Sprite from "../../lib/Sprite.js";
-import Vector from "../../lib/Vector.js";
-import { context, CANVAS_WIDTH, CANVAS_HEIGHT, timer, sounds, canvas } from "../globals.js";
-import GameStateName from "../enums/GameStateName.js";
-import { stateMachine, input } from "../globals.js";
 import Input from "../../lib/Input.js";
+import State from "../../lib/State.js";
 import Colour from "../enums/Colour.js";
 import FontName from "../enums/FontName.js";
+import GameStateName from "../enums/GameStateName.js";
 import SoundName from "../enums/SoundName.js";
-import SaveManager from "../services/SaveManager.js";
+import {
+    CANVAS_HEIGHT,
+    CANVAS_WIDTH,
+    context,
+    input,
+    stateMachine,
+    timer,
+    sounds,
+    canvas,
+} from "../globals.js";
 
-export default class GameOverState extends State {
+export default class RoundEndState extends State {
     constructor() {
         super();
-        this.player = null;
-        this.map = null;
-        this.roundManager = null;
-        this.ghosts = [];
-        this.damageSprite = null;
         this.timeElapsed = 0;
         this.grainOffset = 0;
+        this.roundManager = null;
+        this.roomLoader = null;
+        this.map = null;
+        this.player = null;
     }
 
     enter(parameters = {}) {
-        // Receive roundManager from RoundEndState or PlayState
         this.roundManager = parameters.roundManager;
-        this.player = parameters.player;
+        this.roomLoader = parameters.roomLoader;
         this.map = parameters.map;
+        this.player = parameters.player;
         this.timeElapsed = 0;
         this.grainOffset = 0;
 
-        // Save final score
-        if (this.roundManager && this.roundManager.scoreManager) {
-            this.roundManager.scoreManager.saveScore();
-        }
+        // Ensure canvas is properly reset
+        const canvas = document.querySelector("canvas");
+        if (canvas) {
+            // Reset to base dimensions
+            canvas.width = CANVAS_WIDTH;
+            canvas.height = CANVAS_HEIGHT;
 
-        // Delete save game when game ends
-        SaveManager.deleteSaveGame();
+            // Clear any inline styles from PlayState
+            canvas.style.removeProperty("width");
+            canvas.style.removeProperty("height");
+            canvas.style.removeProperty("position");
+            canvas.style.removeProperty("left");
+            canvas.style.removeProperty("top");
+            canvas.style.removeProperty("transform");
+            canvas.style.backgroundColor = "#0a0a0a";
 
-        // Update map camera to center on player (one last time) if we have map and player
-        if (this.map && this.player) {
-            const canvasWidth = context.canvas.width;
-            const canvasHeight = context.canvas.height;
-            const playerScreenX = canvasWidth / 2;
-            const playerScreenY = canvasHeight / 2;
-            this.map.offsetX = playerScreenX - this.player.mapPosition.x * this.map.zoom;
-            this.map.offsetY = playerScreenY - this.player.mapPosition.y * this.map.zoom;
-
-            // Create 3 ghosts above player's head
-            const playerHeadY = this.player.mapPosition.y - this.player.dimensions.y / 2;
-            
-            // Position ghosts above player's head, stacked vertically
-            this.ghosts = [
-                new Ghost(new Vector(this.player.mapPosition.x, playerHeadY - 32)),  // First ghost, 32px above head
-                new Ghost(new Vector(this.player.mapPosition.x, playerHeadY - 64)), // Second ghost, 64px above head
-                new Ghost(new Vector(this.player.mapPosition.x, playerHeadY - 96)), // Third ghost, 96px above head
-            ];
-
-            // Load damage sprite from character_damage.png
-            const damageImage = images.get(ImageName.CharacterDamage);
-            this.damageSprite = new Sprite(damageImage, 0, 0, 32, 32);
+            // Trigger the global resize handler to apply proper scaling
+            window.dispatchEvent(new Event("resize"));
         }
 
         // Focus canvas for keyboard input
@@ -72,8 +61,7 @@ export default class GameOverState extends State {
     }
 
     exit() {
-        this.ghosts = [];
-        this.damageSprite = null;
+        // Nothing to clean up
     }
 
     update(dt) {
@@ -81,13 +69,32 @@ export default class GameOverState extends State {
         this.timeElapsed += dt;
         this.grainOffset += dt * 60; // Grain animation speed
 
-        // Check for restart input - start a new game
         if (input.isKeyPressed(Input.KEYS.ENTER)) {
-            // Reset round manager for new game
-            if (this.roundManager) {
-                this.roundManager.reset();
+            // Continue to next round or game over
+            if (this.roundManager && this.roundManager.getCurrentRound() < 5) {
+                // Go to next round
+                this.roundManager.nextRound();
+                this.roundManager.startRound();
+                // Pass existing objects to continue the game
+                stateMachine.change(GameStateName.Play, {
+                    roundManager: this.roundManager,
+                    roomLoader: this.roomLoader,
+                    map: this.map,
+                    player: this.player,
+                });
+            } else {
+                // Game over after 5 rounds
+                stateMachine.change(GameStateName.GameOver, {
+                    roundManager: this.roundManager,
+                });
             }
-            stateMachine.change(GameStateName.Play);
+        }
+
+        if (input.isKeyPressed(Input.KEYS.ESCAPE)) {
+            // Exit to game over screen
+            stateMachine.change(GameStateName.GameOver, {
+                roundManager: this.roundManager,
+            });
         }
     }
 
@@ -107,11 +114,11 @@ export default class GameOverState extends State {
         // 3. Vignette (dark edges)
         this.drawVignette();
 
-        // 4. Game Over text with glow
-        this.drawGameOverText();
+        // 4. Round end text with glow
+        this.drawRoundEndText();
 
-        // 5. Score display
-        this.drawScoreInfo();
+        // 5. Round number and points
+        this.drawRoundInfo();
 
         // 6. Prompt text with breathing effect
         this.drawPrompt();
@@ -138,7 +145,10 @@ export default class GameOverState extends State {
                 yPos + CANVAS_HEIGHT / layers
             );
             fogGradient.addColorStop(0, Colour.TitleFogDark);
-            fogGradient.addColorStop(0.5, `rgba(${Colour.TitleFogMidRgb}, ${alpha})`);
+            fogGradient.addColorStop(
+                0.5,
+                `rgba(${Colour.TitleFogMidRgb}, ${alpha})`
+            );
             fogGradient.addColorStop(1, Colour.TitleFogDark);
 
             context.fillStyle = fogGradient;
@@ -161,14 +171,16 @@ export default class GameOverState extends State {
         context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     }
 
-    drawGameOverText() {
+    drawRoundEndText() {
         // Slow pulsing glow
         const glowPulse = Math.sin(this.timeElapsed * 0.5) * 0.3 + 0.7;
 
         context.save();
 
         // Multiple text shadows for glow effect
-        context.shadowColor = `rgba(${Colour.TitleShadowLightRgb}, ${glowPulse * 0.3})`;
+        context.shadowColor = `rgba(${Colour.TitleShadowLightRgb}, ${
+            glowPulse * 0.3
+        })`;
         context.shadowBlur = 30;
 
         // Main title
@@ -180,16 +192,18 @@ export default class GameOverState extends State {
         // Add slight distortion
         const distort = Math.sin(this.timeElapsed * 2) * 0.5;
         context.fillText(
-            "GAME OVER",
+            "ROUND END",
             CANVAS_WIDTH / 2 + distort,
             CANVAS_HEIGHT / 2 - 120
         );
 
         // Secondary glow layer
         context.shadowBlur = 50;
-        context.shadowColor = `rgba(${Colour.TitleShadowDarkRgb}, ${glowPulse * 0.2})`;
+        context.shadowColor = `rgba(${Colour.TitleShadowDarkRgb}, ${
+            glowPulse * 0.2
+        })`;
         context.fillText(
-            "GAME OVER",
+            "ROUND END",
             CANVAS_WIDTH / 2 + distort,
             CANVAS_HEIGHT / 2 - 120
         );
@@ -197,7 +211,7 @@ export default class GameOverState extends State {
         context.restore();
     }
 
-    drawScoreInfo() {
+    drawRoundInfo() {
         context.save();
 
         context.font = `40px ${FontName.CourierNew}`;
@@ -207,22 +221,25 @@ export default class GameOverState extends State {
         context.shadowColor = `rgba(${Colour.PromptShadowRgb}, 0.5)`;
         context.shadowBlur = 15;
 
-        if (this.roundManager && this.roundManager.scoreManager) {
-            const finalScore = this.roundManager.scoreManager.getCurrentScore();
-            const highScore = this.roundManager.scoreManager.getHighScore();
+        // Round number
+        const roundNumber = this.roundManager
+            ? this.roundManager.getCurrentRound()
+            : 1;
+        context.fillText(
+            `Round: ${roundNumber}`,
+            CANVAS_WIDTH / 2,
+            CANVAS_HEIGHT / 2 - 20
+        );
 
-            context.fillText(
-                `Score: ${finalScore}`,
-                CANVAS_WIDTH / 2,
-                CANVAS_HEIGHT / 2 - 20
-            );
-
-            context.fillText(
-                `High Score: ${highScore}`,
-                CANVAS_WIDTH / 2,
-                CANVAS_HEIGHT / 2 + 30
-            );
-        }
+        // Points
+        const points = this.roundManager?.scoreManager
+            ? this.roundManager.scoreManager.getCurrentScore()
+            : 0;
+        context.fillText(
+            `Points: ${points}`,
+            CANVAS_WIDTH / 2,
+            CANVAS_HEIGHT / 2 + 30
+        );
 
         context.restore();
     }
@@ -232,17 +249,38 @@ export default class GameOverState extends State {
         const breathe = Math.sin(this.timeElapsed * 1.5) * 0.4 + 0.6;
 
         context.save();
-        context.font = `28px ${FontName.CourierNew}`;
+        context.font = `24px ${FontName.CourierNew}`;
         context.fillStyle = `rgba(${Colour.PromptTextRgb}, ${breathe})`;
         context.textBaseline = "middle";
         context.textAlign = "center";
-        context.shadowColor = `rgba(${Colour.PromptShadowRgb}, ${breathe * 0.5})`;
+        context.shadowColor = `rgba(${Colour.PromptShadowRgb}, ${
+            breathe * 0.5
+        })`;
         context.shadowBlur = 15;
 
+        const roundNumber = this.roundManager
+            ? this.roundManager.getCurrentRound()
+            : 1;
+
+        if (roundNumber < 5) {
+            context.fillText(
+                "PRESS ENTER TO CONTINUE",
+                CANVAS_WIDTH / 2,
+                CANVAS_HEIGHT / 2 + 100
+            );
+        } else {
+            context.fillText(
+                "PRESS ENTER FOR FINAL SCORE",
+                CANVAS_WIDTH / 2,
+                CANVAS_HEIGHT / 2 + 100
+            );
+        }
+
+        context.font = `20px ${FontName.CourierNew}`;
         context.fillText(
-            "PRESS ENTER TO PLAY AGAIN",
+            "PRESS ESC TO EXIT",
             CANVAS_WIDTH / 2,
-            CANVAS_HEIGHT / 2 + 100
+            CANVAS_HEIGHT / 2 + 140
         );
 
         context.restore();
@@ -270,7 +308,9 @@ export default class GameOverState extends State {
         context.putImageData(imageData, 0, 0);
 
         // Add static overlay
-        context.fillStyle = `rgba(${Colour.StaticOverlayRgb}, ${Math.random() * 0.02})`;
+        context.fillStyle = `rgba(${Colour.StaticOverlayRgb}, ${
+            Math.random() * 0.02
+        })`;
         context.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     }
 
@@ -298,3 +338,4 @@ export default class GameOverState extends State {
         context.restore();
     }
 }
+

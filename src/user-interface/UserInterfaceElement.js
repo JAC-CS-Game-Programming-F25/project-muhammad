@@ -1,21 +1,24 @@
+import Vector from "../../lib/Vector.js";
+import Tile from "../services/Tile.js";
+import FontName from "../enums/FontName.js";
+
 /**
  * The base UI element that all interface elements should extend.
+ * Uses tile-based positioning.
  */
 export default class UserInterfaceElement {
-    /**
-     * @param {HTMLElement} container - The DOM container element
-     */
-    constructor(container) {
-        this.container = container;
-        this.element = null;
-    }
+    static FONT_SIZE = Tile.SIZE * 0.65;
+    static FONT_FAMILY = FontName.CourierNew;
 
     /**
-     * Called when the UI element is created.
-     * Override in subclasses to set up the element.
+     * @param {number} x - X position in tiles
+     * @param {number} y - Y position in tiles
+     * @param {number} width - Width in tiles
+     * @param {number} height - Height in tiles
      */
-    create() {
-        // Override in subclasses
+    constructor(x, y, width, height) {
+        this.position = new Vector(x * Tile.SIZE, y * Tile.SIZE);
+        this.dimensions = new Vector(width * Tile.SIZE, height * Tile.SIZE);
     }
 
     /**
@@ -37,9 +40,7 @@ export default class UserInterfaceElement {
      * Called when the UI element should be removed.
      */
     destroy() {
-        if (this.element && this.element.parentNode) {
-            this.element.parentNode.removeChild(this.element);
-        }
+        // Override in subclasses if needed
     }
 }
 

@@ -1,218 +1,169 @@
-import UserInterfaceElement from "./UserInterfaceElement.js";
+import Panel from "./elements/Panel.js";
+import { context } from "../globals.js";
+import Colour from "../enums/Colour.js";
+import FontName from "../enums/FontName.js";
 
 /**
- * UI Overlay for Silent Hill style interface.
- * Displays timer, stamina, round, and score.
+ * Clean Minimalist UI Overlay
+ * Bigger size, no background border
  */
-export default class UIOverlay extends UserInterfaceElement {
-    constructor(container, playState) {
-        super(container);
+export default class UIOverlay extends Panel {
+    constructor(playState) {
+        super(0.5, 0.5, 12, 6, {
+            borderColour: "rgba(0, 0, 0, 0)", // No border on panel
+            panelColour: "rgba(20, 20, 20, 0.4)", // Light black, almost transparent
+            padding: 18,
+        });
+
         this.playState = playState;
-    }
+        this.timeElapsed = 0;
 
-    create() {
-        // Create the UI overlay element
-        this.element = document.createElement("div");
-        this.element.id = "ui-overlay";
-        this.element.style.position = "absolute";
-        this.element.style.top = "20px";
-        this.element.style.left = "20px";
-        this.element.style.zIndex = "100";
-        this.element.style.pointerEvents = "none";
-
-        // Add styles and HTML
-        this.element.innerHTML = `
-            <style>
-                @keyframes grain {
-                    0%, 100% { opacity: 0.03; }
-                    50% { opacity: 0.06; }
-                }
-                
-                .ui-container {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 12px;
-                    font-family: 'Courier New', monospace;
-                    background: rgba(10, 10, 10, 0.85);
-                    padding: 15px;
-                    border: 1px solid #333;
-                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
-                }
-                
-                .bar-container {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 4px;
-                }
-                
-                .bar-label {
-                    font-size: 10px;
-                    color: #c8c8b4;
-                    text-transform: uppercase;
-                    letter-spacing: 2px;
-                    text-shadow: 0 0 8px rgba(200, 200, 180, 0.5);
-                    font-weight: bold;
-                }
-                
-                .bar-background {
-                    width: 200px;
-                    height: 16px;
-                    background: #000;
-                    border: 2px solid #555;
-                    position: relative;
-                    box-shadow: inset 0 2px 6px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.5);
-                    overflow: hidden;
-                }
-                
-                .bar-background::after {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: repeating-linear-gradient(
-                        90deg,
-                        rgba(255,255,255,0.02) 0px,
-                        transparent 1px,
-                        transparent 2px,
-                        rgba(255,255,255,0.02) 3px
-                    );
-                    pointer-events: none;
-                }
-                
-                .bar-fill {
-                    height: 100%;
-                    transition: width 0.3s ease;
-                    position: relative;
-                    box-shadow: 0 0 8px rgba(200, 200, 180, 0.2);
-                }
-                
-                .bar-fill.timer {
-                    background: linear-gradient(90deg, #c8c8b4 0%, #a8a89a 100%);
-                }
-                
-                .bar-fill.timer.warning {
-                    background: linear-gradient(90deg, #8b4a4a 0%, #6b3a3a 100%);
-                    animation: pulse 0.5s infinite;
-                }
-                
-                .bar-fill.stamina {
-                    background: linear-gradient(90deg, #7a8a8a 0%, #6a7a7a 100%);
-                }
-                
-                .bar-fill.stamina.low {
-                    background: linear-gradient(90deg, #9a7a4a 0%, #7a5a3a 100%);
-                }
-                
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.6; }
-                }
-                
-                .info-text {
-                    font-size: 14px;
-                    color: #c8c8b4;
-                    text-transform: uppercase;
-                    letter-spacing: 2px;
-                    text-shadow: 0 0 8px rgba(200, 200, 180, 0.3);
-                    display: flex;
-                    gap: 20px;
-                }
-                
-                .scanlines {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: repeating-linear-gradient(
-                        0deg,
-                        rgba(0,0,0,0.1) 0px,
-                        transparent 1px,
-                        transparent 2px,
-                        rgba(0,0,0,0.1) 3px
-                    );
-                    pointer-events: none;
-                    z-index: 1000;
-                }
-            </style>
-            
-            <div class="ui-container">
-                <div class="bar-container">
-                    <div class="bar-label">Timer</div>
-                    <div class="bar-background">
-                        <div id="timer-bar" class="bar-fill timer" style="width: 100%"></div>
-                    </div>
-                </div>
-                
-                <div class="bar-container">
-                    <div class="bar-label">Stamina</div>
-                    <div class="bar-background">
-                        <div id="stamina-bar" class="bar-fill stamina" style="width: 100%"></div>
-                    </div>
-                </div>
-                
-                <div class="info-text">
-                    <span>R: <span id="round-display">1</span>/5</span>
-                    <span>SCORE: <span id="score-display">0</span></span>
-                </div>
-            </div>
-            
-            <div class="scanlines"></div>
-        `;
-
-        // Append to container
-        this.container.appendChild(this.element);
+        // BIGGER SIZE
+        this.position.x = 20;
+        this.position.y = 20;
+        this.dimensions.x = 320; // Much wider (was 240)
+        this.dimensions.y = 110; // Taller (was 85)
     }
 
     update(dt) {
-        // Update UI elements based on playState
+        this.timeElapsed += dt;
+    }
+
+    render() {
         if (!this.playState || !this.playState.roundManager) return;
 
         const roundManager = this.playState.roundManager;
         const gameTimer = roundManager.gameTimer;
         const scoreManager = roundManager.scoreManager;
+        const player = this.playState.player;
 
-        // Update timer bar
-        const timerBar = document.getElementById("timer-bar");
-        if (timerBar && gameTimer) {
-            const timeRemaining = gameTimer.getTimeRemaining();
-            const baseTime = gameTimer.getBaseTime();
-            const timerPercent = baseTime > 0 ? (timeRemaining / baseTime) * 100 : 0;
-            timerBar.style.width = timerPercent + "%";
-            timerBar.className =
-                timeRemaining < 10 ? "bar-fill timer warning" : "bar-fill timer";
+        context.save();
+
+        // Simple panel background (no border)
+        this.renderPanel();
+
+        // Translate to content area
+        context.translate(
+            this.position.x + this.padding,
+            this.position.y + this.padding
+        );
+
+        // Timer bar
+        this.renderBar(
+            "TIMER",
+            0,
+            gameTimer ? gameTimer.getTimeRemaining() : 0,
+            gameTimer ? gameTimer.getBaseTime() : 1,
+            gameTimer && gameTimer.getTimeRemaining() < 10
+        );
+
+        // Stamina bar
+        if (player) {
+            this.renderBar(
+                "STAMINA",
+                36, // More spacing
+                player.stamina,
+                player.maxStamina,
+                false
+            );
         }
 
-        // Update stamina bar
-        const staminaBar = document.getElementById("stamina-bar");
-        if (staminaBar && this.playState.player) {
-            const staminaPercent =
-                (this.playState.player.stamina / this.playState.player.maxStamina) * 100;
-            staminaBar.style.width = staminaPercent + "%";
-            staminaBar.className =
-                staminaPercent < 30
-                    ? "bar-fill stamina low"
-                    : "bar-fill stamina";
-        }
+        // Round and Score on same line
+        this.renderInfoText(72, roundManager, scoreManager);
 
-        // Update round
-        const roundDisplay = document.getElementById("round-display");
-        if (roundDisplay) {
-            roundDisplay.textContent = roundManager.getCurrentRound();
-        }
+        context.restore();
+    }
 
-        // Update score
-        const scoreDisplay = document.getElementById("score-display");
-        if (scoreDisplay) {
-            scoreDisplay.textContent = scoreManager.getCurrentScore();
+    renderPanel() {
+        const x = this.position.x;
+        const y = this.position.y;
+        const w = this.dimensions.x;
+        const h = this.dimensions.y;
+
+        context.save();
+
+        // Light black, almost transparent fill - NO BORDER
+        context.fillStyle = "rgba(20, 20, 20, 0.4)";
+        context.fillRect(x, y, w, h);
+
+        // NO BORDER AT ALL
+
+        context.restore();
+    }
+
+    renderBar(label, yOffset, current, max, isWarning) {
+        const barWidth = this.dimensions.x - this.padding * 2;
+        const barHeight = 16; // Bigger bars
+        const labelY = yOffset;
+        const barY = yOffset + 16; // More spacing
+
+        // Pulsing warning effect
+        const pulse = isWarning
+            ? Math.sin(this.timeElapsed * 4) * 0.3 + 0.7
+            : 1;
+
+        // Label
+        context.save();
+        context.font = `11px ${FontName.CourierNew}`; // Bigger font
+        context.fillStyle = isWarning
+            ? `rgba(220, 100, 100, ${pulse})`
+            : "#ccc";
+        context.textBaseline = "top";
+        context.textAlign = "left";
+        context.fillText(label, 0, labelY);
+        context.restore();
+
+        // Bar background
+        context.save();
+        context.fillStyle = "#1a1a1a";
+        context.fillRect(0, barY, barWidth, barHeight);
+        context.restore();
+
+        // Bar fill
+        const percent = max > 0 ? Math.max(0, Math.min(1, current / max)) : 0;
+        const fillWidth = barWidth * percent;
+
+        if (fillWidth > 0) {
+            context.save();
+
+            if (isWarning) {
+                // Pulsing red for warning
+                context.fillStyle = `rgba(${200 * pulse}, 60, 60, 1)`;
+            } else if (label === "STAMINA") {
+                // Grey
+                context.fillStyle = "#888";
+            } else {
+                // Beige
+                context.fillStyle = "#bbb";
+            }
+
+            context.fillRect(0, barY, fillWidth, barHeight);
+            context.restore();
         }
     }
 
-    render() {
-        // DOM-based UI doesn't need explicit render call
-        // Updates are handled in update() method
+    renderInfoText(yOffset, roundManager, scoreManager) {
+        const barWidth = this.dimensions.x - this.padding * 2;
+
+        context.save();
+        context.font = `11px ${FontName.CourierNew}`; // Bigger font
+        context.fillStyle = "#aaa";
+        context.textBaseline = "top";
+
+        // Round on LEFT
+        context.textAlign = "left";
+        const roundText = `R: ${roundManager.getCurrentRound()}/5`;
+        context.fillText(roundText, 0, yOffset);
+
+        // Score on RIGHT
+        context.textAlign = "right";
+        const scoreText = `SCORE: ${scoreManager.getCurrentScore()}`;
+        context.fillText(scoreText, barWidth, yOffset);
+
+        context.restore();
+    }
+
+    destroy() {
+        // Nothing to clean up
     }
 }
-
