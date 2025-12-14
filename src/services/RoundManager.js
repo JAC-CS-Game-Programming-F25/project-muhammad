@@ -29,8 +29,7 @@ export default class RoundManager {
         this.hasSignedThisRound = false;
         
         // Calculate base time: 20 seconds for all rounds
-        // Round 1: 20s, Round 2: 20s, Round 3: 20s, Round 4: 20s, Round 5: 20s
-        const baseTime = 20;
+        const baseTime = 60;
         
         // Start the timer
         this.gameTimer.start(baseTime);
