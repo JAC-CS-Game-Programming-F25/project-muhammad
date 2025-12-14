@@ -1,126 +1,136 @@
 {
-	"images": [
-	  {
-		"name": "tiles",
-		"path": "./assets/images/Interiors_32x32.png",
-		"width": 512,
-		"height": 34048
-	  },
-	  {
-		"name": "room-builder",
-		"path": "./assets/images/Room_Builder_32x32.png",
-		"width": 2432,
-		"height": 3616
-	  },
-	  {
-		"name": "sidewall",
-		"path": "./assets/images/sidewall.png",
-		"width": 32,
-		"height": 32
-	  },
-	  {
-		"name": "P-305",
-		"path": "./assets/rooms/P-305.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-306",
-		"path": "./assets/rooms/P-306.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-307",
-		"path": "./assets/rooms/P-307.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-308",
-		"path": "./assets/rooms/P-308.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-315",
-		"path": "./assets/rooms/P-315.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-315A",
-		"path": "./assets/rooms/P-315A.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-321",
-		"path": "./assets/rooms/P-321.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-322",
-		"path": "./assets/rooms/P-322.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-323",
-		"path": "./assets/rooms/P-323.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-325",
-		"path": "./assets/rooms/P-325.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-326",
-		"path": "./assets/rooms/P-326.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "P-327",
-		"path": "./assets/rooms/P-327.jpg",
-		"width": 1920,
-		"height": 1080
-	  },
-	  {
-		"name": "character-idle",
-		"path": "./assets/images/character-idle.png",
-		"width": 768,
-		"height": 64
-	  },
-	  {
-		"name": "character-walk",
-		"path": "./assets/images/character-walk.png",
-		"width": 768,
-		"height": 64
-	  }
-	],
-	
-	"fonts": [
-	  {
-		"name": "font",
-		"path": "./assets/fonts/font.ttf"
-	  },
-	  {
-		"name": "Anton",
-		"path": "./assets/fonts/Anton-Regular.ttf"
-	  }
-	],
-	"sounds": [
-	  {
-		"name": "sound",
-		"path": "./assets/sounds/sound.wav",
-		"size": 1,
-		"volume": 0.5
-	  }
-	]
-  }
-  
+    "images": [
+        {
+            "name": "tiles",
+            "path": "./assets/images/Interiors_32x32.png",
+            "width": 512,
+            "height": 34048
+        },
+        {
+            "name": "room-builder",
+            "path": "./assets/images/Room_Builder_32x32.png",
+            "width": 2432,
+            "height": 3616
+        },
+        {
+            "name": "sidewall",
+            "path": "./assets/images/sidewall.png",
+            "width": 32,
+            "height": 32
+        },
+        {
+            "name": "P-305",
+            "path": "./assets/rooms/P-305.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-306",
+            "path": "./assets/rooms/P-306.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-307",
+            "path": "./assets/rooms/P-307.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-308",
+            "path": "./assets/rooms/P-308.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-315",
+            "path": "./assets/rooms/P-315.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-315A",
+            "path": "./assets/rooms/P-315A.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-321",
+            "path": "./assets/rooms/P-321.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-322",
+            "path": "./assets/rooms/P-322.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-323",
+            "path": "./assets/rooms/P-323.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-325",
+            "path": "./assets/rooms/P-325.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-326",
+            "path": "./assets/rooms/P-326.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "P-327",
+            "path": "./assets/rooms/P-327.jpg",
+            "width": 1920,
+            "height": 1080
+        },
+        {
+            "name": "character-idle",
+            "path": "./assets/images/character-idle.png",
+            "width": 768,
+            "height": 64
+        },
+        {
+            "name": "character-walk",
+            "path": "./assets/images/character-walk.png",
+            "width": 768,
+            "height": 64
+        }
+    ],
+
+    "fonts": [
+        {
+            "name": "font",
+            "path": "./assets/fonts/font.ttf"
+        },
+        {
+            "name": "Anton",
+            "path": "./assets/fonts/Anton-Regular.ttf"
+        },
+        {
+            "name": "HelpMe",
+            "path": "./assets/fonts/HelpMe.ttf"
+        }
+    ],
+    "sounds": [
+        {
+            "name": "sound",
+            "path": "./assets/sounds/sound.wav",
+            "size": 1,
+            "volume": 0.5
+        },
+        {
+            "name": "horror-ambient",
+            "path": "./assets/sounds/horror-ambient.mp3",
+            "size": 1,
+            "volume": 0.5,
+            "loop": true
+        }
+    ]
+}
