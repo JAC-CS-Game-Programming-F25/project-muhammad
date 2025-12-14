@@ -47,9 +47,12 @@ export default class PlayerIdlingState extends State {
     }
 
     update() {
-        // Check for signing (Enter key)
+        // Check for signing (Enter key) - only if player can sign (once per round)
         if (input.isKeyPressed(Input.KEYS.ENTER)) {
-            this.player.changeState(PlayerStateName.Signing);
+            if (this.player.roundManager && this.player.roundManager.canSign()) {
+                this.player.roundManager.markSigned();
+                this.player.changeState(PlayerStateName.Signing);
+            }
             return;
         }
 

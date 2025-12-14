@@ -35,10 +35,13 @@ export default class PlayerRunningState extends PlayerMovingState {
      * Check if we should transition to a different state
      */
     shouldChangeState() {
-        // Check for signing (Enter key)
+        // Check for signing (Enter key) - only if player can sign (once per round)
         if (input.isKeyPressed(Input.KEYS.ENTER)) {
-            this.player.changeState(PlayerStateName.Signing);
-            return true;
+            if (this.player.roundManager && this.player.roundManager.canSign()) {
+                this.player.roundManager.markSigned();
+                this.player.changeState(PlayerStateName.Signing);
+                return true;
+            }
         }
 
         // If stamina is depleted, drop to walking

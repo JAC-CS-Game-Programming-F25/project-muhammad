@@ -168,15 +168,21 @@ export default class UIOverlay extends UserInterfaceElement {
 
     update(dt) {
         // Update UI elements based on playState
-        if (!this.playState) return;
+        if (!this.playState || !this.playState.roundManager) return;
+
+        const roundManager = this.playState.roundManager;
+        const gameTimer = roundManager.gameTimer;
+        const scoreManager = roundManager.scoreManager;
 
         // Update timer bar
         const timerBar = document.getElementById("timer-bar");
-        if (timerBar) {
-            const timerPercent = (this.playState.timer / this.playState.maxTime) * 100;
+        if (timerBar && gameTimer) {
+            const timeRemaining = gameTimer.getTimeRemaining();
+            const baseTime = gameTimer.getBaseTime();
+            const timerPercent = baseTime > 0 ? (timeRemaining / baseTime) * 100 : 0;
             timerBar.style.width = timerPercent + "%";
             timerBar.className =
-                this.playState.timer < 10 ? "bar-fill timer warning" : "bar-fill timer";
+                timeRemaining < 10 ? "bar-fill timer warning" : "bar-fill timer";
         }
 
         // Update stamina bar
@@ -194,13 +200,13 @@ export default class UIOverlay extends UserInterfaceElement {
         // Update round
         const roundDisplay = document.getElementById("round-display");
         if (roundDisplay) {
-            roundDisplay.textContent = this.playState.currentRound;
+            roundDisplay.textContent = roundManager.getCurrentRound();
         }
 
         // Update score
         const scoreDisplay = document.getElementById("score-display");
         if (scoreDisplay) {
-            scoreDisplay.textContent = this.playState.score;
+            scoreDisplay.textContent = scoreManager.getCurrentScore();
         }
     }
 

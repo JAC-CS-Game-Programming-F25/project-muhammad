@@ -1,6 +1,7 @@
 import State from "../../lib/State.js";
 import Map from "../services/Map.js";
 import RoomLoader from "../services/RoomLoader.js";
+import RoundManager from "../services/RoundManager.js";
 import Player from "../entities/Player.js";
 import Vector from "../../lib/Vector.js";
 import UIOverlay from "../user-interface/UIOverlay.js";
@@ -19,15 +20,10 @@ export default class PlayState extends State {
         this.player = null;
         this.lastRoomCheck = null;
         this.uiOverlay = null;
-
-        // Game state
-        this.timer = 60;
-        this.maxTime = 60;
-        this.lives = 3;
-        this.score = 0;
-        this.currentRound = 1;
-        this.maxRounds = 5;
+        this.roundManager = null;
         this.grainOffset = 0;
+        this.hasCheckedSign = false; // Track if we've already checked the sign for this round
+        this.hasHandledTimerExpiry = false; // Track if we've already handled timer expiry
     }
 
     async enter() {
@@ -52,6 +48,16 @@ export default class PlayState extends State {
 
         this.map.player = this.player;
         this.roomLoader = new RoomLoader(mapDefinition);
+        
+        // Initialize RoundManager
+        this.roundManager = new RoundManager(this.roomLoader);
+        this.roundManager.startRound();
+        this.hasCheckedSign = false; // Reset sign check flag for new round
+        this.hasHandledTimerExpiry = false; // Reset timer expiry flag for new round
+        
+        // Give player access to roundManager for signing checks
+        this.player.roundManager = this.roundManager;
+        
         this.setupLayout();
         await this.waitForPhotoSphereViewer();
         this.loadRandomRoom();
@@ -129,7 +135,8 @@ export default class PlayState extends State {
     }
 
     loadRandomRoom() {
-        this.currentRoomName = this.roomLoader.getRandomRoomName();
+        // Use target room from RoundManager
+        this.currentRoomName = this.roundManager.getTargetRoom();
         const room = this.roomLoader.getRoom(this.currentRoomName);
 
         console.log("Loading room:", this.currentRoomName, room);
@@ -184,17 +191,55 @@ export default class PlayState extends State {
             this.map.update(dt);
         }
 
+        if (this.roundManager) {
+            // Update game timer
+            this.roundManager.gameTimer.update(dt);
+
+            // Check if timer expired (only handle once)
+            if (this.roundManager.checkRoundComplete() && !this.hasHandledTimerExpiry) {
+                // Timer expired - end round with failure
+                this.hasHandledTimerExpiry = true;
+                this.roundManager.endRound(false);
+                // TODO: Transition to GameOver state
+            }
+        }
+
         if (this.player && this.roomLoader && this.currentRoomName) {
             this.player.update(dt);
 
-            // Update timer
-            this.timer -= dt;
-            if (this.timer <= 0) {
-                this.timer = 0;
-                // TODO: Handle timeout
+            // Check if player has planted a sign and verify if it's in the correct room
+            // Only check once when sign is first planted (not every frame)
+            if (this.player.sign && this.roundManager && !this.hasCheckedSign) {
+                // Check if player is still in signing state (signing takes 4 seconds)
+                const isSigning = this.player.stateMachine.currentState.constructor.name === 'PlayerSigningState';
+                
+                // Only check when signing is complete (player has exited signing state)
+                if (!isSigning) {
+                    const playerX = this.player.sign.position.x;
+                    const playerY = this.player.sign.position.y;
+                    const roomAtSignPosition = this.roomLoader.getRoomAtPosition(
+                        playerX,
+                        playerY
+                    );
+                    const targetRoom = this.roundManager.getTargetRoom();
+
+                    // Mark as checked to prevent multiple checks
+                    this.hasCheckedSign = true;
+
+                    // Check if sign is in the correct room
+                    if (roomAtSignPosition === targetRoom) {
+                        // Correct room - end round with success
+                        this.roundManager.endRound(true);
+                        // TODO: Transition to RoundEnd state
+                    } else if (roomAtSignPosition !== null) {
+                        // Wrong room - end round with failure
+                        this.roundManager.endRound(false);
+                        // TODO: Transition to GameOver state
+                    }
+                }
             }
 
-            // Check room
+            // Check room for UI feedback (not for scoring)
             const playerX = this.player.mapPosition.x;
             const playerY = this.player.mapPosition.y;
             const roomAtPosition = this.roomLoader.getRoomAtPosition(
@@ -206,7 +251,6 @@ export default class PlayState extends State {
                 roomAtPosition === this.currentRoomName &&
                 roomAtPosition !== this.lastRoomCheck
             ) {
-                console.log("Correct room!");
                 this.lastRoomCheck = roomAtPosition;
             } else if (roomAtPosition !== this.currentRoomName) {
                 this.lastRoomCheck = null;
