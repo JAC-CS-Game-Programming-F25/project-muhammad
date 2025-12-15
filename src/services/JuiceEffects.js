@@ -1,10 +1,12 @@
+import ParticleEmitter from "../../lib/ParticleEmitter.js";
 import { context } from "../globals.js";
 import Colour from "../enums/Colour.js";
 
 export default class JuiceEffects {
     constructor() {
-        this.screenShake = null; // {intensity, duration, timer}
-        this.floatingText = null; // {text, x, y, yOffset, opacity, timer}
+        this.screenShake = null;
+        this.floatingText = null;
+        this.particleEmitter = new ParticleEmitter();
     }
 
     /**
@@ -34,6 +36,13 @@ export default class JuiceEffects {
     }
 
     /**
+     * Create running dust particles at player's feet
+     */
+    createRunDust(x, y) {
+        this.particleEmitter.emitRunDust(x, y);
+    }
+
+    /**
      * Update all juice effects
      */
     update(dt) {
@@ -55,6 +64,9 @@ export default class JuiceEffects {
                 this.floatingText = null;
             }
         }
+
+        // Update particles
+        this.particleEmitter.update(dt);
     }
 
     /**
@@ -111,10 +123,18 @@ export default class JuiceEffects {
     }
 
     /**
+     * Render particles
+     */
+    renderParticles() {
+        this.particleEmitter.render(context);
+    }
+
+    /**
      * Reset all effects
      */
     reset() {
         this.screenShake = null;
         this.floatingText = null;
+        this.particleEmitter.clear();
     }
 }

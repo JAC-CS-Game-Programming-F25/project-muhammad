@@ -69,3 +69,4 @@ export default class Panel extends UserInterfaceElement {
         this.isVisible = !this.isVisible;
     }
 }
+

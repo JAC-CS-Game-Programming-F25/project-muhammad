@@ -21,3 +21,4 @@ export default class GhostHiddenState extends State {
     }
 }
 
+

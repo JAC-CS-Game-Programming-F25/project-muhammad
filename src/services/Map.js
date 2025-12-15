@@ -57,6 +57,9 @@ export default class Map {
 
     // Player will be added later when entity is created
     this.player = null;
+
+    // Reference to juice effects (will be set by PlayState)
+    this.juiceEffects = null;
   }
 
   update(dt) {

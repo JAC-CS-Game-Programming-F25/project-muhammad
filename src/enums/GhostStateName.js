@@ -6,3 +6,4 @@ const GhostStateName = {
 
 export default GhostStateName;
 
+

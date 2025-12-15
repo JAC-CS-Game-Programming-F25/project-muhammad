@@ -99,6 +99,11 @@ export default class PlayState extends State {
         this.juiceEffects.reset();
         this.hasShownHalfwayWarning = false;
         this.saveTimer = 0;
+
+        // IMPORTANT: Link juiceEffects to map so player states can access it
+        if (this.map) {
+            this.map.juiceEffects = this.juiceEffects;
+        }
     }
 
     /**
@@ -180,10 +185,11 @@ export default class PlayState extends State {
 
         // JUICE: Halfway timer warning
         if (this.roundManager && !this.hasShownHalfwayWarning) {
-            const timeRemaining = this.roundManager.gameTimer.getTimeRemaining();
+            const timeRemaining =
+                this.roundManager.gameTimer.getTimeRemaining();
             const baseTime = this.roundManager.gameTimer.getBaseTime();
             const halfTime = baseTime / 2;
-            
+
             if (timeRemaining <= halfTime && timeRemaining > halfTime - 0.5) {
                 this.hasShownHalfwayWarning = true;
                 this.juiceEffects.createFloatingWarning(
@@ -334,6 +340,8 @@ export default class PlayState extends State {
         if (this.map) {
             this.map.render();
 
+            // Render entities (ghosts) and particles in map's transformed space
+            // Always render particles if map exists (particles may exist even without ghosts)
             if (this.ghosts.length > 0) {
                 context.save();
                 context.scale(this.map.zoom, this.map.zoom);
@@ -342,9 +350,25 @@ export default class PlayState extends State {
                     this.map.offsetY / this.map.zoom
                 );
 
+                // Render ghosts
                 for (const ghost of this.ghosts) {
                     ghost.render();
                 }
+
+                // Render particles in same transformed space
+                this.juiceEffects.renderParticles();
+
+                context.restore();
+            } else {
+                // Render particles even when no ghosts (for running dust effect)
+                context.save();
+                context.scale(this.map.zoom, this.map.zoom);
+                context.translate(
+                    this.map.offsetX / this.map.zoom,
+                    this.map.offsetY / this.map.zoom
+                );
+
+                this.juiceEffects.renderParticles();
 
                 context.restore();
             }
@@ -352,7 +376,6 @@ export default class PlayState extends State {
 
         this.juiceEffects.restoreScreenShake(shakeApplied);
 
-        // JUICE: Render floating text
         this.juiceEffects.renderFloatingText();
 
         if (this.uiOverlay) {

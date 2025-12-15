@@ -6,3 +6,4 @@ const FontName = {
 };
 
 export default FontName;
+
